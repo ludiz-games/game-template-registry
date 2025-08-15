@@ -1,0 +1,22 @@
+{
+  "name": "@repo/colyseus-types",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@colyseus/schema": "^3.0.35"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.8.3"
+  }
+}
