@@ -9,8 +9,16 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as files from "../files.js";
 import type * as http from "../http.js";
+import type * as installedComponents from "../installedComponents.js";
 import type * as lib_email from "../lib/email.js";
+import type * as messages from "../messages.js";
+import type * as projects from "../projects.js";
+import type * as rateLimit from "../rateLimit.js";
+import type * as threads from "../threads.js";
+import type * as toolCallLogs from "../toolCallLogs.js";
+import type * as vectorSearch from "../vectorSearch.js";
 
 import type {
   ApiFromModules,
@@ -28,8 +36,16 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  files: typeof files;
   http: typeof http;
+  installedComponents: typeof installedComponents;
   "lib/email": typeof lib_email;
+  messages: typeof messages;
+  projects: typeof projects;
+  rateLimit: typeof rateLimit;
+  threads: typeof threads;
+  toolCallLogs: typeof toolCallLogs;
+  vectorSearch: typeof vectorSearch;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

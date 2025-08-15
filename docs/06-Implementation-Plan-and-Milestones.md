@@ -1,25 +1,27 @@
 ### Implementation Plan and Milestones
 
-#### M0 – Decisions & Skeletons
+#### M0 – Decisions & Skeletons ✅ COMPLETED
 
-- **Decide**: DB (Convex), Auth (Better Auth), Hosting (Vercel + Fly/Railway), Registry placement.
-- **Scaffold**: `apps/registry` from [shadcn-ui/registry-template](https://github.com/shadcn-ui/registry-template).
-- **Create**: First items: `mcq` component + `multi-quiz` blueprint with JSON Schemas.
-- **Deliver**: Registry serves manifests; shadcn CLI can fetch files locally.
+- **✅ Decided**: DB (Convex), Auth (Better Auth), Hosting (Vercel + Fly/Railway), Registry placement.
+- **✅ Scaffolded**: `apps/registry` from [shadcn-ui/registry-template](https://github.com/shadcn-ui/registry-template).
+- **✅ Created**: Components: `mcq-component`, `true-false-component`, `quiz-timer` with JSON Schemas.
+- **✅ Delivered**: Registry serves manifests; shadcn CLI verified working locally.
+- **✅ Bonus**: Complete Colyseus integration with `@ludiz/colyseus-hooks` package, working multiplayer game.
 
-#### M1 – Assistant ↔ Registry Loop
+#### M1 – Assistant ↔ Registry Loop 🚧 NEXT
 
+- **Setup**: Convex backend with schema, functions, and vector search.
 - **Implement**: Vector search over components/blueprints.
 - **Wiring**: Sandbox command to run `shadcn add <item> --registry <url>`.
 - **Runtime**: JSON Schema → Zod → dynamic tool registration per project/thread.
 - **UI**: Click‑to‑edit using schema‑driven form; persist to `gameDefinition`.
 - **Deliver**: User can add an MCQ, generate data via tool, and edit via form.
 
-#### M2 – Colyseus MVP
+#### M2 – Colyseus MVP ✅ COMPLETED EARLY
 
-- **Server**: `quizRoom` with join/submit/next/score.
-- **Client**: Wrapper and page integration; optimistic UI where useful.
-- **Deliver**: Two players can join and complete a short quiz.
+- **✅ Server**: `FullLLMRoom` with join/submit/next/score implemented.
+- **✅ Client**: `@ludiz/colyseus-hooks` wrapper and game integration complete.
+- **✅ Delivered**: Two players can join and complete multiplayer quiz successfully.
 
 #### M3 – Components, Blueprints, Design Toolchain
 

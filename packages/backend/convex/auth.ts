@@ -27,7 +27,14 @@ export const {
 } = betterAuthComponent.createAuthFunctions<DataModel>({
   // Must create a user and return the user id
   onCreateUser: async (ctx, user) => {
-    return ctx.db.insert("users", { email: user.email });
+    const now = Date.now();
+    return ctx.db.insert("users", {
+      name: user.name,
+      email: user.email,
+      // Don't store authUserId here - Better Auth handles the relationship
+      createdAt: now,
+      updatedAt: now,
+    });
   },
 
   // Delete the user when they are deleted from Better Auth
