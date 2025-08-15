@@ -1,0 +1,55 @@
+{
+  "name": "@ludiz/colyseus-hooks",
+  "version": "0.1.0",
+  "description": "React hooks for Colyseus real-time multiplayer framework",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "check-types": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "colyseus",
+    "multiplayer",
+    "real-time",
+    "game-development"
+  ],
+  "author": "Ludiz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/ludiz-vibe",
+    "directory": "packages/colyseus-hooks"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "colyseus.js": ">=0.15.0",
+    "@colyseus/schema": ">=2.0.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "^18.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
