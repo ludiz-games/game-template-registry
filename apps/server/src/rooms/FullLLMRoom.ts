@@ -16,31 +16,59 @@ export class FullLLMRoom extends Room<BaseState> {
     this.setState(new BaseState());
 
     this.onMessage("ui.event", (client, message: UIEvent) => {
+      console.log(
+        "Server received message:",
+        message,
+        "from client:",
+        client.sessionId
+      );
       const player = this.state.players.get(client.sessionId);
-      if (!player) return;
+      if (!player) {
+        console.log("Player not found for session:", client.sessionId);
+        return;
+      }
 
       const type = message?.type;
+      console.log("Processing message type:", type);
       if (type === "answer.submit") {
         const stepIdx = this.state.extNum.get("stepIndex") ?? 0;
         const current = this.steps[stepIdx];
+        console.log("Current step index:", stepIdx, "Current step:", current);
         let correct = false;
         if (current?.kind === "qcm") {
           const idx = Number(message?.choiceIndex);
           const answerIndex = Number(current?.data?.correctIndex);
+          console.log(
+            "MCQ: submitted index:",
+            idx,
+            "correct index:",
+            answerIndex
+          );
           correct = Number.isInteger(idx) && idx === answerIndex;
         } else if (current?.kind === "tf") {
           const expected = Boolean(current?.data?.correctValue);
           const submitted =
             (message as any)?.correct ?? (message as any)?.value;
+          console.log("TF: submitted:", submitted, "expected:", expected);
           correct = Boolean(submitted) === expected;
         }
-        if (correct) player.score += 10;
+        console.log("Answer is correct:", correct);
+        if (correct) {
+          player.score += 10;
+          console.log("Player score updated to:", player.score);
+        }
+        console.log("Calling nextStep()");
         this.nextStep();
       } else if (
         type === "navigate.to" &&
         typeof message?.outlineId === "string"
       ) {
         this.state.outline.currentId = message.outlineId;
+      } else if (type === "game.start") {
+        // Manual start game trigger
+        if (this.state.phase === "idle") {
+          this.startQuiz();
+        }
       }
     });
   }
@@ -187,7 +215,16 @@ export class FullLLMRoom extends Room<BaseState> {
   private nextStep() {
     const current = this.state.extNum.get("stepIndex") ?? 0;
     const next = current + 1;
+    console.log(
+      "nextStep: current =",
+      current,
+      "next =",
+      next,
+      "totalSteps =",
+      this.state.extNum.get("totalSteps")
+    );
     if (next >= (this.state.extNum.get("totalSteps") ?? this.steps.length)) {
+      console.log("Game finished, setting phase to 'finished'");
       this.state.phase = "finished";
       this.state.outline.currentId = "results";
       if (this.tickHandle) {
@@ -199,6 +236,7 @@ export class FullLLMRoom extends Room<BaseState> {
       }
       return;
     }
+    console.log("Loading next step:", next);
     this.loadStep(next);
   }
 

@@ -3,18 +3,23 @@
   "compilerOptions": {
     "outDir": "build",
     "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false,
     "baseUrl": ".",
     "paths": {
-      "@repo/*": ["../../packages/*"]
+      "@repo/*": [
+        "../../packages/*"
+      ]
     }
   },
   "include": [
     "src"
   ],
-  "exclude": ["node_modules", "build"]
+  "exclude": [
+    "node_modules",
+    "build"
+  ]
 }
