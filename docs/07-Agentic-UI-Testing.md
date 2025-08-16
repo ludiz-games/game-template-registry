@@ -261,3 +261,4 @@ export async function POST(req: NextRequest) {
 #### Notes
 
 - The older `design_simulate_user_flow` scripted tool can remain as a fallback for deterministic demos, but prefer the agentic autopilot above for real projects.
+- Store screenshots/artifacts in Supabase Storage; persist only the `path` in DB and resolve signed URLs when needed.

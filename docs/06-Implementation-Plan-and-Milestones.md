@@ -2,7 +2,7 @@
 
 #### M0 – Decisions & Skeletons ✅ COMPLETED
 
-- **✅ Decided**: DB (Convex), Auth (Better Auth), Hosting (Vercel + Fly/Railway), Registry placement.
+- **✅ Decided**: DB (Supabase/Postgres), Auth (Better Auth), Hosting (Vercel + Fly/Railway), Registry placement.
 - **✅ Scaffolded**: `apps/registry` from [shadcn-ui/registry-template](https://github.com/shadcn-ui/registry-template).
 - **✅ Created**: Components: `mcq-component`, `true-false-component`, `quiz-timer` with JSON Schemas.
 - **✅ Delivered**: Registry serves manifests; shadcn CLI verified working locally.
@@ -10,7 +10,7 @@
 
 #### M1 – Assistant ↔ Registry Loop 🚧 NEXT
 
-- **Setup**: Convex backend with schema, functions, and vector search.
+- **Setup**: Supabase database (SQL schema, pgvector), Realtime channels (Broadcast or postgres_changes), and storage buckets.
 - **Implement**: Vector search over components/blueprints.
 - **Wiring**: Sandbox command to run `shadcn add <item> --registry <url>`.
 - **Runtime**: JSON Schema → Zod → dynamic tool registration per project/thread.
@@ -28,6 +28,7 @@
 - **Components**: True/False, Timer, Score, Nav.
 - **Blueprints**: Point & Click, You’re the Hero baseline.
 - **Design Tools**: Implement all tools; asset storage decisions; basic doc for usage patterns.
+- **Sandbox Realtime**: Wire Supabase Realtime Broadcast for editor↔preview updates (see `docs/15-Sandbox-Realtime.md`).
 - **Deliver**: Assistant can perform a design pass end‑to‑end for the quiz.
 
 #### M4 – Hardening & UX

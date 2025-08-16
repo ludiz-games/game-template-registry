@@ -13,7 +13,7 @@ graph TB
 
     subgraph "Backend Services"
         Colyseus[Colyseus Server :2567<br/>FullLLMRoom + Real-time]
-        Convex[Convex Backend<br/>DB + Vector Search + Auth]
+        Supabase[Supabase (Postgres + Realtime + Storage)<br/>DB + Vector Search + Auth]
     end
 
     subgraph "Shared Packages"
@@ -29,8 +29,8 @@ graph TB
     Colyseus --> ColyseusTypes
     ColyseusHooks --> ColyseusTypes
 
-    Web --> Convex
-    Vibe --> |Future: Tool Calls| Convex
+    Web --> Supabase
+    Vibe --> |Tool Calls + Persist| Supabase
 
     Registry --> |Serves JSON| Game
     Registry --> |Component Schemas| Vibe
@@ -40,7 +40,7 @@ graph TB
     style Registry fill:#e8f5e8
     style Game fill:#fff3e0
     style Colyseus fill:#fce4ec
-    style Convex fill:#f1f8e9
+    style Supabase fill:#f1f8e9
 ```
 
 ## 📦 Package Structure
@@ -55,7 +55,7 @@ graph TB
 
 ### Packages (Shared)
 
-- **`packages/backend`** - Convex backend (schema + functions)
+- **`packages/backend`** - Backend utilities (DB client/queries, auth middleware)
 - **`packages/colyseus-types`** - Shared Colyseus schemas
 - **`packages/colyseus-hooks`** - **Publishable** React hooks for Colyseus
 - **`packages/ui`** - Shared UI components
@@ -76,7 +76,7 @@ graph TB
 ### Backend
 
 - **Colyseus** - Real-time multiplayer framework
-- **Convex** - Database, auth, and vector search
+- **Supabase/Postgres** - Database, realtime, storage, and vector search
 - **Better Auth** - Authentication system
 - **Node.js** - Runtime for Colyseus server
 
@@ -109,7 +109,7 @@ graph TB
 1. **User** chats with AI in vibe app
 2. **AI SDK 5** processes requests and calls tools
 3. **Dynamic tools** generated from component JSON schemas
-4. **Tool calls** persisted in Convex for audit trail
+4. **Tool calls** persisted in Postgres for audit trail
 5. **Results** streamed back to user interface
 
 ## 🚀 Deployment Architecture
@@ -125,8 +125,8 @@ graph TB
 
 - **Web/Vibe/Registry** → Vercel
 - **Colyseus Server** → Fly.io/Railway
-- **Convex** → Convex Cloud
-- **Assets** → Vercel/Convex Storage
+- **Database** → Supabase (Postgres)
+- **Assets** → Supabase Storage (or Vercel Blob)
 
 ## 🔐 Security & Auth
 
@@ -138,7 +138,7 @@ graph TB
 
 ### Planned (M1+)
 
-- **Project-based authorization** in Convex
+- **Project-based authorization** in Postgres (RLS or app-layer authz)
 - **Rate limiting** for AI tool calls
 - **Audit logging** for all operations
 - **Component installation** tracking
@@ -154,7 +154,7 @@ graph TB
 ### Server State
 
 - **Colyseus rooms** for real-time multiplayer
-- **Convex tables** for persistent data
+- **Postgres tables** for persistent data
 - **Vector embeddings** for component search
 
 ## 🧪 Testing Strategy

@@ -295,70 +295,66 @@ export async function POST(req: NextRequest) {
 }
 ```
 
-#### Convex Storage integration (optional)
+#### Supabase Storage integration (optional)
 
-If using Convex as the primary file store, replace local `public/` writes with a server-side upload helper. Ensure your tool execution context provides a `userId` for ownership.
+If using Supabase Storage as the primary file store, replace local `public/` writes with a server-side upload helper. Ensure your tool execution context provides a `userId` for ownership.
 
 ```ts
-// runtime/convexStorage.ts (see full version in docs/10-Convex-Files-and-Storage.md)
-import { convex } from "@/lib/convexClient";
+// runtime/storage.ts (see full version in docs/10-Supabase-Files-and-Storage.md)
+import { createClient } from "@supabase/supabase-js";
 
-export async function uploadBufferToConvex(params: {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function uploadBufferToStorage(params: {
   buffer: Buffer;
   fileName: string;
   contentType: string;
   ownerId: string;
   tags?: string[];
 }) {
-  const uploadUrl = await convex.actions.files.generateUploadUrl();
-  const post = await fetch(uploadUrl, {
-    method: "POST",
-    headers: { "Content-Type": params.contentType },
-    body: params.buffer,
-  });
-  if (!post.ok) throw new Error("Convex upload failed");
-  const { storageId } = await post.json();
-  const fileId = await convex.mutations.files.recordUpload({
-    storageId,
-    ownerId: params.ownerId,
-    fileName: params.fileName,
-    contentType: params.contentType,
-    size: params.buffer.byteLength,
-    tags: params.tags,
-  });
-  const url = await convex.queries.files.getFileUrl({ storageId });
-  return { fileId, storageId, url };
+  const path = `${params.ownerId}/${Date.now()}-${params.fileName}`;
+  const { error } = await supabase.storage
+    .from("assets")
+    .upload(path, params.buffer, { contentType: params.contentType });
+  if (error) throw error;
+  const { data } = await supabase.storage
+    .from("assets")
+    .createSignedUrl(path, 60 * 60);
+  return { path, url: data?.signedUrl };
 }
 ```
 
-Examples using Convex storage inside tools:
+Examples using Supabase storage inside tools:
 
 ```ts
 // In design_remove_background.execute
-import { uploadBufferToConvex } from "@/runtime/convexStorage";
+import { uploadBufferToStorage } from "@/runtime/storage";
 
 const buf = Buffer.from(await resp.arrayBuffer());
-const uploaded = await uploadBufferToConvex({
+const uploaded = await uploadBufferToStorage({
   buffer: buf,
   fileName: `bg-removed-${Date.now()}.png`,
   contentType: "image/png",
   ownerId: (ctx as any).userId,
   tags: ["design", "bg-removed"],
 });
-return { ...uploaded }; // { fileId, storageId, url }
+return { ...uploaded }; // { path, url }
 ```
 
 ```ts
 // In design_create_nine_slice.execute
 const buf = await downloadToBuffer(imageUrl);
-const uploaded = await uploadBufferToConvex({
+const uploaded = await uploadBufferToStorage({
   buffer: buf,
   fileName: `${outputName}.png`,
   contentType: "image/png",
   ownerId: (ctx as any).userId,
   tags: ["design", "9slice"],
 });
-// Note: URLs are time-limited; store storageId and resolve URL on render if needed.
+// Note: URLs are time-limited; store path and resolve a signed URL on render if needed.
 const css = `
 .nine-slice-${outputName} {
   border-style: solid;
@@ -378,7 +374,7 @@ await page.goto(args.url, { waitUntil: "networkidle" });
 const buf = await page.screenshot({ type: "png" });
 await browser.close();
 
-const uploaded = await uploadBufferToConvex({
+const uploaded = await uploadBufferToStorage({
   buffer: Buffer.from(buf),
   fileName: `shot-${Date.now()}.png`,
   contentType: "image/png",

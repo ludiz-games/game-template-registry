@@ -16,7 +16,7 @@ We have successfully completed **Milestone 0 (M0 - Decisions & Skeletons)** and 
   - `apps/server` - Colyseus multiplayer server (port 2567)
   - `apps/game` - Vite game client (port 3003)
 - **Packages**:
-  - `packages/backend` - Convex backend (ready for M1)
+  - `packages/backend` - Backend utilities (DB client/queries, auth middleware)
   - `packages/colyseus-types` - Shared Colyseus schemas
   - `packages/colyseus-hooks` - **Publishable** React hooks for Colyseus
   - `packages/ui`, `packages/email`, etc. - Shared utilities
@@ -75,7 +75,7 @@ ludiz-vibe/
 │   ├── game/          # Game client (port 3003)
 │   └── server/        # Colyseus server (port 2567)
 ├── packages/
-│   ├── backend/       # Convex backend (ready for M1)
+│   ├── backend/       # DB utils (ready for M1)
 │   ├── colyseus-types/    # Shared schemas
 │   ├── colyseus-hooks/    # Publishable React hooks
 │   ├── ui/            # Shared UI components
@@ -119,7 +119,7 @@ The system currently supports:
 
 Ready to implement:
 
-1. **Convex Backend Setup** - Schema, functions, vector search
+1. **Supabase/Postgres Setup** - SQL schema, pgvector, Realtime channels
 2. **Dynamic Tool Registration** - JSON Schema → Zod → AI tools
 3. **Vector Search** - Component discovery and recommendation
 4. **Click-to-Edit** - Schema-driven forms for component data
@@ -136,7 +136,7 @@ Ready to implement:
 
 ## 📋 Technical Decisions Made
 
-- **Database**: Convex (ready in packages/backend)
+- **Database**: Supabase/Postgres
 - **Auth**: Better Auth (implemented in apps/web)
 - **Hosting**: Vercel for apps, Fly/Railway for Colyseus
 - **Module System**: ESM throughout with proper exports

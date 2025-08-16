@@ -6,9 +6,9 @@
   - **Web app**: Chat, file explorer, preview, click-to-edit, tools. Next.js + AI SDK.
   - **Registry app**: Custom shadcn registry serving item manifests and files (JSON Schemas included). Based on [shadcn-ui/registry-template](https://github.com/shadcn-ui/registry-template).
   - **Colyseus server**: Real-time rooms corresponding to blueprints (e.g., Multi‑Quiz).
-  - **DB**: Convex (preferred for MVP) with vector search; Postgres + pgvector is a viable alternative later.
+  - **DB**: Postgres (Supabase) with pgvector for vector search; Supabase Realtime for live updates; Supabase Storage for assets.
   - **Auth**: Better Auth.
-  - **Orchestrator**: AI SDK 5 in the Next.js API routes; Convex provides persistence and vectors.
+  - **Orchestrator**: AI SDK 5 in the Next.js API routes; Postgres (Supabase) provides persistence, vectors, and realtime.
 
 #### Deployment Topology (recommended)
 
@@ -22,10 +22,10 @@
 - `apps/registry` (registry site)
 - `apps/colyseus-server` (rooms)
 
-#### Data Model (Convex‑style types)
+#### Data Model (Postgres tables)
 
 ```ts
-// Pseudo-types for clarity
+// Pseudo-schema (map to SQL)
 type User = {
   id: string;
   email: string;
@@ -33,27 +33,31 @@ type User = {
   createdAt: number;
 };
 
+// components(id uuid pk, name text, kind text, category text, description text,
+// files jsonb, schema jsonb, tool jsonb, version text, tags text[], embedding vector)
 type ComponentItem = {
   id: string;
-  name: string; // "mcq"
+  name: string;
   kind: "component";
-  category: string; // "game-block" | "ui" | ...
+  category: string;
   description?: string;
-  files: string[]; // relative paths in registry
-  schema: any; // JSON Schema
+  files: string[];
+  schema: any;
   tool: { name: string; description?: string };
-  version: string; // semver
+  version: string;
   tags: string[];
-  embedding: number[]; // vector for search
+  embedding: number[];
 };
 
+// blueprints(id uuid, name text, kind text, description text, files jsonb,
+// schema jsonb, default_component_instances jsonb, colyseus jsonb, version text, tags text[], embedding vector)
 type BlueprintItem = {
   id: string;
-  name: string; // "multi-quiz"
+  name: string;
   kind: "blueprint";
   description?: string;
   files: string[];
-  schema: any; // JSON Schema for top-level config
+  schema: any;
   defaultComponentInstances: Array<{ component: string; props: any }>;
   colyseus?: { room: string; events: string[] };
   version: string;
@@ -61,24 +65,28 @@ type BlueprintItem = {
   embedding: number[];
 };
 
+// installed_components(id uuid, project_id uuid fk, name text, version text, tool_name text, schema jsonb)
 type InstalledComponent = {
   id: string;
   projectId: string;
-  name: string; // "mcq"
+  name: string;
   version: string;
-  toolName: string; // "create_mcq_data"
-  schema: any; // copied from registry at install time
+  toolName: string;
+  schema: any;
 };
 
+// projects(id uuid, owner_id uuid fk, name text, blueprint_id uuid, sandbox_id text,
+// installed_components jsonb, game_definition jsonb, theme_tokens jsonb,
+// created_at timestamptz, updated_at timestamptz)
 type Project = {
   id: string;
   ownerId: string;
   name: string;
   blueprintId?: string;
-  sandboxId: string; // link to sandbox/FS workspace
+  sandboxId: string;
   installedComponents: InstalledComponent[];
-  gameDefinition: GameDefinition; // tree of instances
-  themeTokens: Record<string, string>; // CSS vars
+  gameDefinition: GameDefinition;
+  themeTokens: Record<string, string>;
   createdAt: number;
   updatedAt: number;
 };
@@ -117,8 +125,8 @@ type Message = {
 
 #### Vector Search
 
-- **Index**: Combine `ComponentItem` and `BlueprintItem` into a single vector index keyed by tags/name/description/manifests.
-- **Embedding**: Use provider embedding model; store in Convex vector table; similarity search for assistant queries.
+- **Index**: Combine `ComponentItem` and `BlueprintItem` into a single table or two tables with pgvector indexes.
+- **Embedding**: Use provider embedding model; store in Postgres `vector` columns; create `ivfflat` indexes for similarity search.
 
 #### Auth Flows
 

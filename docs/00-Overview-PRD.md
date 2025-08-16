@@ -23,6 +23,7 @@
 - **Click-to-edit**: Open a schema-bound form for any component instance; persisted updates roundtrip without the LLM.
 - **Blueprints**: A minimal Multi‑Quiz blueprint composed of MCQ + Timer + Score; server support with a Colyseus room.
 - **Design toolchain**: Image generation, reference-driven element rendering, background removal, 9‑slice asset creation, theme token application, screenshots, visual diff, flow simulation.
+- **Sandbox realtime preview**: Supabase Realtime Broadcast channel per draft/session for instant type-to-preview updates; persist snapshots to Postgres on save or cadence.
 
 #### Non‑Goals (MVP)
 
@@ -30,9 +31,9 @@
 
 #### Assumptions
 
-- **Stack**: Next.js app, **AI SDK 5** (Vercel AI) for orchestration, **Convex DB** for state/vectors/threads, **Better Auth** for authentication.
+- **Stack**: Next.js app, **AI SDK 5** (Vercel AI) for orchestration, **Supabase (Postgres + Realtime + Storage)** for state/vectors/threads, **Better Auth** for authentication.
 - **Hosting**: Next.js on Vercel (or similar); Colyseus server on Fly/Railway/Render.
-- **Assets**: Local in `public/` during development; object storage in production.
+- **Assets**: Local in `public/` during development; **Supabase Storage** (or other object storage) in production.
 
 #### Success Metrics (indicative)
 
