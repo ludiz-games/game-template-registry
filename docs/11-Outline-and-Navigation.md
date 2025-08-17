@@ -200,11 +200,11 @@ export const OutlineOperations = z.object({
 - The preview reads `activeOutlinePath` and renders the node’s `componentInstanceIds`. If empty, show a placeholder prompting to add a component.
 - Optionally sync `activeOutlinePath` to the URL (`?node=...` or encoded path) for deep linking.
 
-#### Colyseus mapping
+#### Colyseus mapping (machine‑driven)
 
-- The room state can include `activeNodePath: string[]` and broadcast transitions.
-- For linear quiz: `nextQuestion` increments to the next step node; server validates bounds.
-- For branches: client submits a choice which maps to a child node; the room updates `activeNodePath` accordingly and broadcasts.
+- The XState JSON machine is the primary driver of runtime flow and timers. All room events map to machine events.
+- The machine mutates the replicated state (Colyseus Schema) and emits broadcasts. Outline progression is expressed as machine transitions.
+- See `docs/16-Blueprint-DSL-and-Dynamic-Rooms.md` for the required machine format and how it maps to Colyseus.
 
 #### Blueprint authoring guidance
 

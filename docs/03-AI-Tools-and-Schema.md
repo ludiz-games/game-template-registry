@@ -3,9 +3,10 @@
 #### Overview
 
 - **Why**: Registry items carry JSON Schemas; we compile them into runtime AI tools (Zod) per project/thread to generate and validate component data.
-- **Two paths**:
+- **Three coordinated paths**:
   - LLM‑driven tool calls (chat).
   - Direct form‑driven calls (click‑to‑edit) using the same validation and executor.
+  - Server blueprint generation: produce a Colyseus room DSL (XState JSON + JSONLogic) and build a versioned server bundle that the generic room dynamically loads. See `docs/16-Blueprint-DSL-and-Dynamic-Rooms.md`.
 
 #### Runtime: compile JSON Schema → Tool
 
@@ -127,10 +128,13 @@ export function createToolFromRegistryItem(item: RegistryItem) {
 
 export async function getRuntimeToolsForProject(projectId: string) {
   const installed: RegistryItem[] = await getInstalledRegistryItems(projectId);
-  return installed.reduce((acc, item) => {
-    Object.assign(acc, createToolFromRegistryItem(item));
-    return acc;
-  }, {} as Record<string, any>);
+  return installed.reduce(
+    (acc, item) => {
+      Object.assign(acc, createToolFromRegistryItem(item));
+      return acc;
+    },
+    {} as Record<string, any>
+  );
 }
 
 async function getInstalledRegistryItems(
@@ -306,6 +310,87 @@ export function SchemaForm({ schema, initialValue, onSubmit }: Props) {
   );
 }
 ```
+
+#### Generating Room DSL and Bundles (server path)
+
+The assistant can also generate the multiplayer logic as a declarative state machine and package it as a server bundle that `GenericRoom` loads at runtime.
+
+- DSL: XState machine JSON for states/timers/transitions, with JSONLogic for guards/expressions.
+- Events: JSON Schemas for incoming messages (payloads) to validate at runtime.
+- Bundle: ESM module exporting `State?`, `register(room, ctx)`, and optional `metadata`. The `register` can use an interpreter to run the machine safely.
+
+Minimal machine example:
+
+```json
+{
+  "id": "quiz",
+  "initial": "idle",
+  "context": { "timePerStep": 30, "steps": [] },
+  "states": {
+    "idle": {
+      "on": {
+        "GAME_START": {
+          "target": "question",
+          "actions": ["resetTimer", "emitDefinition"]
+        }
+      }
+    },
+    "question": {
+      "after": { "1000": ["tick"] },
+      "on": {
+        "ANSWER_SUBMIT": [
+          {
+            "cond": {
+              "==": [
+                { "var": "event.index" },
+                { "var": "context.current.correctIndex" }
+              ]
+            },
+            "actions": [
+              {
+                "type": "score.add",
+                "params": { "target": "client", "amount": 10 }
+              }
+            ]
+          },
+          { "actions": ["advanceOrFinish"] }
+        ]
+      }
+    },
+    "finished": { "type": "final" }
+  }
+}
+```
+
+Server bundle contract (generated ESM):
+
+```ts
+// bundles/<projectId>/<blueprintId>/<version>/server.mjs
+import { Schema } from "@colyseus/schema";
+
+export class State extends Schema {
+  /* optional */
+}
+export async function register(room, ctx) {
+  /* attach message handlers, timers; wire machine */
+}
+export const metadata = { kind: "quiz", version: "0.1.0" };
+```
+
+Resolution and loading is handled by the server host; see `apps/server/src/rooms/bundle-loader.ts` and `docs/05-Colyseus-Integration.md`.
+
+#### Chat toolchain additions (for DSL/bundles)
+
+Add tools the assistant can call to manage multiplayer artifacts:
+
+- `blueprint_generate_machine`: produces XState JSON + event schemas from a plain‑English spec or existing components/outline.
+- `blueprint_build_server_bundle`: compiles `State?` + `register()` or wraps the machine + actions into an ESM bundle and uploads it to storage; returns `{ bundleUrl, version }`.
+- `blueprint_generate_client_stub`: emits a typed minimal client for the blueprint events.
+- `blueprint_publish`: marks a `{ projectId, blueprintId, version }` as current.
+
+These tools are simple wrappers around a Node build step (e.g., tsup/esbuild) and storage upload; they should record outputs (URLs, versions) for room creation.
+
+See `docs/16-Blueprint-DSL-and-Dynamic-Rooms.md` for the full DSL and safety model, and `docs/05-Colyseus-Integration.md` for how rooms load bundles dynamically.
 
 ```tsx
 // components/game/MCQCard.tsx (example consumer)

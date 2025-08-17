@@ -78,8 +78,11 @@
     { "component": "score", "props": {} }
   ],
   "colyseus": {
-    "room": "quizRoom",
-    "events": ["join", "submitAnswer", "nextQuestion", "scoreUpdate"]
+    "room": "project",
+    "events": ["join", "submitAnswer", "nextQuestion", "scoreUpdate"],
+    "machine": {
+      /* REQUIRED: XState JSON machine driving the blueprint */
+    }
   },
   "tags": ["quiz", "blueprint"],
   "version": "0.1.0"
