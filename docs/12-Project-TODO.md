@@ -5,16 +5,16 @@
   - [ ] Create envs: LLM/embeddings, image gen, background removal, Supabase URL/ANON/SERVICE keys, Colyseus endpoint, MCP (optional).
 
 - **Migration (Convex → Supabase)**
-  - [ ] Remove code and config
-    - [ ] Delete `packages/backend/convex/` (all functions/files)
-    - [ ] Delete `apps/vibe/convex.json`
-    - [ ] Remove any imports/usages of `@/lib/convexClient`, `convex/*`, `convex/values`
-  - [ ] Remove dependencies and scripts
-    - [ ] Root and package `package.json`: remove `convex`, `convex-dev`, `convex-*` deps and scripts
-    - [ ] Remove Convex-related env vars from `.env*`
-  - [ ] Replace references in code/docs
-    - [ ] AI route persistence now uses Postgres (see `docs/09-AI-SDK-Orchestration-with-Convex.md`)
-    - [ ] Storage now uses Supabase (see `docs/10-Supabase-Files-and-Storage.md`)
+  - [x] Remove code and config
+    - [x] Delete `packages/backend/convex/` (all functions/files)
+    - [x] Delete `apps/vibe/convex.json`
+    - [x] Remove any imports/usages of `@/lib/convexClient`, `convex/*`, `convex/values`
+  - [x] Remove dependencies and scripts
+    - [x] Root and package `package.json`: remove `convex`, `convex-dev`, `convex-*` deps and scripts
+    - [x] Remove Convex-related env vars from `.env*`
+  - [x] Replace references in code/docs
+    - [x] AI route persistence now uses Postgres (see `docs/09-AI-SDK-Orchestration-with-Convex.md`)
+    - [x] Storage now uses Supabase (see `docs/10-Supabase-Files-and-Storage.md`)
 
 - **Monorepo and scaffolding**
   - [x] Structure: `apps/web`, `apps/vibe`, `apps/registry`, `apps/server`, `apps/game`, `packages/colyseus-types`, `packages/colyseus-hooks`.
@@ -42,12 +42,13 @@
     - [ ] Tables: `users`, `projects`, `components`, `blueprints`, `installed_components`, `threads`, `messages`, `tool_call_logs`, `files`
     - [ ] Vectors: add `embedding vector` columns and `ivfflat` indexes where needed
     - [ ] Add Drizzle/Prisma migrations and migration scripts
-  - [ ] RLS & security
-    - [ ] Enable RLS and write policies (owner can read/write own projects/threads/messages/files)
-    - [ ] Storage policies for buckets (owner-only or public-read as needed)
+  - [ ] Security (app-layer, no RLS)
+    - [ ] Keep Postgres RLS disabled; enforce authorization in API routes/middleware (Better Auth session → project membership checks)
+    - [ ] Use service-role only on server routes; no direct client DB writes
+    - [ ] Storage: prefer private buckets + signed URLs from server; allow public-read only for explicit public assets
   - [ ] API & access
     - [ ] Server routes for reads/writes; tool call logs (create/update)
-    - [ ] Signed URL endpoint for assets when using private buckets
+    - [ ] Signed URL endpoint for assets when using private buckets; short-lived URLs in preview
   - [ ] Rate limiting & observability
     - [ ] Basic per-user rate limits on hot routes
     - [ ] Log errors and DB timing metrics
