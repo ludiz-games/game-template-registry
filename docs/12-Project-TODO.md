@@ -27,6 +27,7 @@
   - [ ] Blueprints: `multi-quiz` (with default `outline`), base `point-and-click`, base `youre-the-hero`.
   - [x] Manifests: `registry.json`, per-item `schema`, `tool` metadata, `files`.
   - [x] Serve items under `public/r/[name].json`; verify `shadcn add` locally.
+  - [x] Make `colyseus.machine` (XState JSON) a required field on blueprint manifests (machine-first design).
 
 - **Sandbox install loop**
   - [ ] Command tool: run `npx shadcn add <item> --registry <url>` in sandbox.
@@ -54,6 +55,10 @@
 - **AI SDK 5 orchestration**
   - [ ] Chat route `app/api/chat/route.ts`: dynamic tools from schemas; design tools; visual self-check message injection; stream + persist to Postgres.
   - [ ] Direct tool route `app/api/tools/[toolName]/route.ts`: validate with shared Zod; execute; persist.
+  - [ ] Tools for multiplayer authoring:
+    - [ ] `blueprint_generate_machine`: produce XState JSON + event schemas from spec/components/outline.
+    - [ ] `blueprint_generate_client_stub` (optional): minimal typed client from event schemas.
+  - [ ] Persist blueprint machine/state JSON in DB and expose to preview/runtime loader.
 
 - **Editor and preview**
   - [ ] Outline data: `Project.outline`, `activeOutlinePath` (see `docs/11-Outline-and-Navigation.md`).
@@ -61,6 +66,9 @@
   - [ ] Sidebar UI with DnD; selection syncs preview; optional URL sync.
   - [ ] Click-to-edit: `SchemaForm` from JSON Schema → direct tool route.
   - [ ] Preview renders instances for selected outline node; live updates via Supabase Realtime Broadcast channel per `draftId` (or postgres_changes on `projects`).
+  - [ ] Run Colyseus host inside preview sandbox (single process, WS path `/ws`).
+  - [ ] Join dynamic room `"project"` from preview; load machine/state at runtime via room `options` (no bundling).
+  - [ ] On machine/version change, auto-reconnect preview to new room version.
 
 - **Design toolchain**
   - [ ] Tools: `design_generate_image`, `design_image_from_reference`, `design_remove_background`, `design_create_nine_slice`, `design_apply_theme_tokens`, `design_screenshot_page`.
@@ -68,9 +76,13 @@
   - [ ] Supabase Storage mode: upload buffers to a bucket; return `{ path, publicUrl or signedUrl }`.
 
 - **Colyseus**
-  - [x] Server: `FullLLMRoom` (join/submit/next/score); ready for deploy (Fly/Railway/Render).
-  - [x] Client wrapper: `@ludiz/colyseus-hooks` package; blueprint wiring; env-based endpoint.
-  - [ ] Optionally sync `activeNodePath` for multiplayer progression.
+  - [x] Register generic dynamic room host in server: `gameServer.define("project", GenericRoom)`.
+  - [x] Add bundle loader utility (`apps/server/src/rooms/bundle-loader.ts`) for resolving local file/URL.
+  - [ ] Implement runtime machine interpreter (XState JSON + JSONLogic) and map named actions to safe effects.
+  - [ ] Implement runtime Schema builder from DSL (`defineTypes`) to create per-blueprint `State` classes (no `ext*` maps).
+  - [ ] Validate incoming messages against JSON Schemas; reject invalid payloads.
+  - [ ] Add preview host mode (Colyseus mounted on the preview server inside sandbox).
+  - [ ] Deprecate or keep `FullLLMRoom` only as a demo; migrate quizzes to machine-first room.
 
 - **Agentic UI testing (autopilot)**
   - [ ] Preferred: MCP (Skyvern) integration and tool registration in AI SDK run: [Skyvern MCP](https://docs.skyvern.com/integrations/mcp).
@@ -103,6 +115,8 @@
 
 - **Documentation**
   - [ ] Polish `docs/00–11`; add examples/screenshots; quickstart; ops runbooks.
+  - [x] Update Colyseus docs to machine-first dynamic rooms (`docs/05`), runtime Schemas (`docs/16`).
+  - [x] Add chat scenario transcripts (`docs/17`); expand with more scenarios (install flow, design pass, branching story).
 
 - **Acceptance (MVP)**
-  - [ ] Create project → install `multi-quiz` → generate MCQs → outline navigates steps → two players complete quiz → design pass (image → element → bg remove → 9-slice → theme) → screenshot → LLM similarity ≥ 0.85 → publish preview.
+  - [ ] Create project → install `multi-quiz` → generate MCQs → machine-driven flow runs in dynamic `"project"` room (runtime Schema) → two players complete quiz → design pass (image → element → bg remove → 9-slice → theme) → screenshot → LLM similarity ≥ 0.85 → publish preview.
