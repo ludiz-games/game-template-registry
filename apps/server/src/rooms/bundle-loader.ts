@@ -27,6 +27,10 @@ export type BlueprintBundle = {
   ) => void | Promise<void>;
   /** Optional metadata included in the bundle */
   metadata?: Record<string, any>;
+  /** Optional DSL for runtime schema generation */
+  dsl?: any;
+  /** Optional generated classes map */
+  classes?: Map<string, new () => any>;
 };
 
 /**
@@ -46,7 +50,7 @@ export async function resolveBundleUrl(
   return new URL(
     `../../bundles/${projectId}/${blueprintId}/${version}/server.mjs`,
     import.meta.url
-  ).pathname;
+  ).href;
 }
 
 /**

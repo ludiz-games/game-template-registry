@@ -1,0 +1,43 @@
+{
+  "timePerStep": 30,
+  "steps": [
+    {
+      "kind": "qcm",
+      "data": {
+        "question": "What is the average length of a Martian day (a 'sol')?",
+        "choices": ["23 h 56 m", "24 h 37 m", "26 h 10 m", "20 h 00 m"],
+        "correctIndex": 1
+      }
+    },
+    {
+      "kind": "tf",
+      "data": {
+        "question": "Water ice exists at the Martian poles.",
+        "correctValue": true
+      }
+    },
+    {
+      "kind": "qcm",
+      "data": {
+        "question": "Which rover landed on Mars in 2021?",
+        "choices": ["Curiosity", "Opportunity", "Perseverance", "Spirit"],
+        "correctIndex": 2
+      }
+    },
+    {
+      "kind": "tf",
+      "data": {
+        "question": "Mars' gravity is stronger than Earth's.",
+        "correctValue": false
+      }
+    },
+    {
+      "kind": "qcm",
+      "data": {
+        "question": "Main component of Mars' atmosphere?",
+        "choices": ["Oxygen", "Nitrogen", "Carbon dioxide", "Methane"],
+        "correctIndex": 2
+      }
+    }
+  ]
+}

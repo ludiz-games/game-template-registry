@@ -5,8 +5,8 @@ import config from "@colyseus/tools";
 /**
  * Import your Room files
  */
-import { FullLLMRoom } from "./rooms/FullLLMRoom";
-import { GenericRoom } from "./rooms/GenericRoom";
+import { FullLLMRoom } from "./rooms/FullLLMRoom.js";
+import { GenericRoom } from "./rooms/GenericRoom.js";
 
 export default config({
   initializeGameServer: (gameServer) => {

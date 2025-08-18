@@ -5,7 +5,7 @@ import {
   loadBlueprintBundle,
   type BlueprintBundle,
   type DynamicRoomOptions,
-} from "./bundle-loader";
+} from "./bundle-loader.js";
 
 export class GenericRoom extends Room<Schema | BaseState> {
   maxClients = 64;
@@ -19,7 +19,13 @@ export class GenericRoom extends Room<Schema | BaseState> {
 
     this.bundle = await loadBlueprintBundle(options);
 
-    if (this.bundle?.State) {
+    // Check if bundle has a DSL and schema builder result
+    if (this.bundle?.dsl && typeof this.bundle.register === "function") {
+      // The register function will handle state creation with the schema builder
+      console.log(
+        "[GenericRoom] Bundle has DSL, letting register function handle state creation"
+      );
+    } else if (this.bundle?.State) {
       this.setState(new this.bundle.State());
     } else {
       this.setState(new BaseState());
@@ -39,22 +45,48 @@ export class GenericRoom extends Room<Schema | BaseState> {
   }
 
   onJoin(client: Client, options?: { name?: string }) {
-    const state = this.state as BaseState;
-    if (
-      state &&
-      state.players &&
-      state.players.set &&
-      !state.players.get(client.sessionId)
-    ) {
-      const p = new BasePlayer();
-      p.name = options?.name || "Player";
-      state.players.set(client.sessionId, p);
+    console.log(
+      `[GenericRoom] Client ${client.sessionId} joining with options:`,
+      options
+    );
+
+    // Try to add player if state has players map
+    const state = this.state as any;
+    if (state && state.players && typeof state.players.set === "function") {
+      if (!state.players.get(client.sessionId)) {
+        // If we have a dynamically generated Player class from the bundle, use it
+        // Otherwise fall back to BasePlayer
+        let player;
+        if (
+          (this as any)._dynamicClasses?.get &&
+          (this as any)._dynamicClasses.get("Player")
+        ) {
+          const PlayerClass = (this as any)._dynamicClasses.get("Player");
+          if (PlayerClass) {
+            player = new PlayerClass();
+            player.name = options?.name || "Player";
+            player.score = 0;
+          }
+        }
+
+        if (!player) {
+          // Fallback to BasePlayer
+          player = new BasePlayer();
+          player.name = options?.name || "Player";
+        }
+
+        state.players.set(client.sessionId, player);
+        console.log(
+          `[GenericRoom] Added player ${player.name} with session ${client.sessionId}`
+        );
+      }
     }
   }
 
   onLeave(client: Client) {
-    const state = this.state as BaseState;
-    if (state && state.players && state.players.delete) {
+    console.log(`[GenericRoom] Client ${client.sessionId} leaving`);
+    const state = this.state as any;
+    if (state && state.players && typeof state.players.delete === "function") {
       state.players.delete(client.sessionId);
     }
   }
