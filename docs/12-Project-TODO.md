@@ -24,6 +24,7 @@
 - **Registry (components + blueprints)**
   - [x] Scaffold `apps/registry` from template: [shadcn-ui/registry-template](https://github.com/shadcn-ui/registry-template).
   - [x] Components: `mcq-component`, `true-false-component`, `quiz-timer` (JSON Schema + minimal styling).
+  - [x] Enhanced components with shadcn primitives (RadioGroup, proper Button variants, modern styling)
   - [ ] Blueprints: `multi-quiz` (with default `outline`), base `point-and-click`, base `youre-the-hero`.
   - [x] Manifests: `registry.json`, per-item `schema`, `tool` metadata, `files`.
   - [x] Serve items under `public/r/[name].json`; verify `shadcn add` locally.
@@ -102,7 +103,10 @@
   - [ ] Register tools; create/modify outline; generate component data; preview; run design pass; perform visual check.
 
 - **Theming**
-  - [ ] Define CSS variables/tokens; tool to apply tokens; minimal shadcn styling; allow assistant edits.
+  - [x] Define CSS variables/tokens; tool to apply tokens; minimal shadcn styling; allow assistant edits.
+  - [x] Configure shadcn/ui properly for Tailwind v4 with correct @theme directives
+  - [x] Update game components to use shadcn primitives (RadioGroup for MCQ, enhanced Button variants for True/False)
+  - [x] Implement modern UI with Cards, Badges, Progress bars, and proper icons
 
 - **Versioning and migrations**
   - [ ] Store registry item versions; diff/migration flow for schema/props/outline.

@@ -126,8 +126,8 @@ export class GenericRoom extends Room<Schema | BaseState> {
           const PlayerClass = this.dynamicClasses.get("Player");
           if (PlayerClass) {
             player = new PlayerClass();
-            player.name = options?.name || "Player";
-            player.score = 0;
+            // Only set name if provided; avoid hardcoding other fields
+            player.name = options?.name || (player as any).name || "Player";
           }
         }
 
