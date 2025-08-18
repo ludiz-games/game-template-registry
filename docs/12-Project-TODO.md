@@ -78,12 +78,15 @@
 
 - **Colyseus**
   - [x] Register generic dynamic room host in server: `gameServer.define("project", GenericRoom)`.
-  - [x] Add bundle loader utility (`apps/server/src/rooms/bundle-loader.ts`) for resolving local file/URL.
-  - [ ] Implement runtime machine interpreter (XState JSON + JSONLogic) and map named actions to safe effects.
-  - [ ] Implement runtime Schema builder from DSL (`defineTypes`) to create per-blueprint `State` classes (no `ext*` maps).
+  - [x] Add definition loader utility (`apps/server/src/definition-loader.ts`) for resolving JSON definitions.
+  - [x] Implement runtime machine interpreter (XState JSON + JSONLogic) and map named actions to safe effects.
+  - [x] Implement runtime Schema builder from DSL (`defineTypes`) to create per-definition `State` classes (no `ext*` maps).
+  - [x] Generic actions system with whitelisted operations (`setState`, `increment`, `createInstance`, etc.).
+  - [x] Token templating system with Mustache for dynamic parameter resolution (`${event.sessionId}`).
+  - [x] MapSchema-aware path utilities for proper Colyseus replication.
   - [ ] Validate incoming messages against JSON Schemas; reject invalid payloads.
   - [ ] Add preview host mode (Colyseus mounted on the preview server inside sandbox).
-  - [ ] Deprecate or keep `FullLLMRoom` only as a demo; migrate quizzes to machine-first room.
+  - [x] Deprecate `FullLLMRoom`; all games now use machine-first `GenericRoom`.
 
 - **Agentic UI testing (autopilot)**
   - [ ] Preferred: MCP (Skyvern) integration and tool registration in AI SDK run: [Skyvern MCP](https://docs.skyvern.com/integrations/mcp).
@@ -120,4 +123,7 @@
   - [x] Add chat scenario transcripts (`docs/17`); expand with more scenarios (install flow, design pass, branching story).
 
 - **Acceptance (MVP)**
-  - [ ] Create project → install `multi-quiz` → generate MCQs → machine-driven flow runs in dynamic `"project"` room (runtime Schema) → two players complete quiz → design pass (image → element → bg remove → 9-slice → theme) → screenshot → LLM similarity ≥ 0.85 → publish preview.
+  - [x] **Dynamic Rooms**: Machine-driven flow runs in dynamic `"project"` room with runtime Schema ✅
+  - [x] **Quiz Demo**: Two players can complete quiz with score tracking ✅
+  - [x] **JSON-Driven**: All game logic defined in pure JSON (no hardcoded behavior) ✅
+  - [ ] Create project → install `multi-quiz` → generate MCQs → design pass (image → element → bg remove → 9-slice → theme) → screenshot → LLM similarity ≥ 0.85 → publish preview.
