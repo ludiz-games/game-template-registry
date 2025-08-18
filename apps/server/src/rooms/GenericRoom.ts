@@ -5,54 +5,54 @@ import {
   BaseState,
   type DynamicRoomOptions,
 } from "@repo/colyseus-types";
-import { standardActions } from "../blueprint-actions.js";
 import {
-  loadBlueprint,
-  validateBlueprint,
-  type BlueprintConfig,
-} from "../blueprint-loader.js";
+  loadDefinition,
+  validateDefinition,
+  type GameDefinition,
+} from "../definition-loader.js";
+import { standardActions } from "../runtime-actions.js";
 import { schemaBuilder } from "../schema-builder.js";
 import { XStateInterpreter } from "../xstate-interpreter.js";
 
 /**
- * 100% Generic Room - Everything driven by JSON blueprint configuration
+ * 100% Generic Room - Everything driven by JSON game definition
  * No hardcoded game logic, pure data-driven architecture
  */
 export class GenericRoom extends Room<Schema | BaseState> {
   maxClients = 64;
 
-  private blueprint: BlueprintConfig | null = null;
+  private definition: GameDefinition | null = null;
   private interpreter: XStateInterpreter | null = null;
   private dynamicClasses: Map<string, new () => any> | null = null;
 
   async onCreate(options: DynamicRoomOptions) {
-    const { projectId, blueprintId, version } = options || {};
+    const { projectId, definitionId, version } = options || {};
 
-    this.setMetadata({ projectId, blueprintId, version });
-    console.log(`[GenericRoom] Creating room for blueprint: ${blueprintId}`);
+    this.setMetadata({ projectId, definitionId, version });
+    console.log(`[GenericRoom] Creating room for definition: ${definitionId}`);
 
     try {
-      // Load blueprint configuration (pure JSON)
-      console.log(`[GenericRoom] 🔍 Loading blueprint for: ${blueprintId}`);
+      // Load game definition (pure JSON)
+      console.log(`[GenericRoom] 🔍 Loading definition for: ${definitionId}`);
       console.log(`[GenericRoom] 🔍 Options:`, options);
 
-      this.blueprint = await loadBlueprint({
-        blueprintId: blueprintId || "multi-quiz",
-        config: (options as any)?.blueprint, // Allow passing blueprint directly
+      this.definition = await loadDefinition({
+        definitionId: definitionId || "multi-quiz",
+        config: (options as any)?.definition, // Allow passing definition directly
       });
 
-      validateBlueprint(this.blueprint);
+      validateDefinition(this.definition);
       console.log(
-        `[GenericRoom] ✅ Loaded blueprint: ${this.blueprint.name} v${this.blueprint.version}`
+        `[GenericRoom] ✅ Loaded definition: ${this.definition.name} v${this.definition.version}`
       );
       console.log(
-        `[GenericRoom] 🎯 Blueprint machine:`,
-        this.blueprint.machine
+        `[GenericRoom] 🎯 Definition machine:`,
+        this.definition.machine
       );
 
-      // Build runtime schema from blueprint DSL
+      // Build runtime schema from definition DSL
       const { StateClass, classes, instantiateWithDefaults } =
-        schemaBuilder.build(this.blueprint.schema);
+        schemaBuilder.build(this.definition.schema);
       this.dynamicClasses = classes;
 
       // Set the dynamically generated state
@@ -63,15 +63,18 @@ export class GenericRoom extends Room<Schema | BaseState> {
       const interpreterContext = {
         room: this,
         state,
-        context: { ...this.blueprint.machine.context, ...this.blueprint.data },
-        data: this.blueprint.data,
+        context: {
+          ...this.definition.machine.context,
+          ...this.definition.data,
+        },
+        data: this.definition.data,
         clock: this.clock,
       };
 
       // Create XState interpreter with only generic actions
       console.log(`[GenericRoom] 🤖 Creating XState interpreter...`);
       this.interpreter = new XStateInterpreter(
-        this.blueprint.machine,
+        this.definition.machine,
         standardActions, // Only generic actions, no hardcoded game logic
         interpreterContext
       );
@@ -82,7 +85,7 @@ export class GenericRoom extends Room<Schema | BaseState> {
       this.setupMessageHandlers();
       console.log(`[GenericRoom] ✅ Message handlers ready`);
     } catch (error) {
-      console.error("[GenericRoom] Failed to initialize blueprint:", error);
+      console.error("[GenericRoom] Failed to initialize definition:", error);
       throw error;
     }
   }
@@ -150,12 +153,12 @@ export class GenericRoom extends Room<Schema | BaseState> {
   }
 
   private getAllEventsFromMachine(): string[] {
-    if (!this.blueprint?.machine?.states) return [];
+    if (!this.definition?.machine?.states) return [];
 
     const events = new Set<string>();
 
     // Extract all event types from all states
-    for (const state of Object.values(this.blueprint.machine.states)) {
+    for (const state of Object.values(this.definition.machine.states)) {
       if ((state as any).on) {
         for (const eventType of Object.keys((state as any).on)) {
           events.add(eventType);

@@ -1,7 +1,7 @@
-// Dynamic room types for blueprint system
+// Dynamic room types for definition system
 export interface DynamicRoomOptions {
   projectId?: string;
-  blueprintId?: string;
+  definitionId?: string;
   version?: string;
   name?: string;
   config?: Record<string, any>;
