@@ -57,6 +57,9 @@ importers:
       '@colyseus/schema':
         specifier: ^3.0.35
         version: 3.0.52
+      '@ludiz/colyseus-hooks':
+        specifier: workspace:*
+        version: link:../../packages/colyseus-hooks
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.2.3(@types/react@19.1.8)(react@19.1.0)
