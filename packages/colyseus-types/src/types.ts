@@ -1,13 +1,9 @@
-export type StepNode = { 
-  kind: string; 
-  data: any 
-};
-
-export interface RoomOptions {
+// Dynamic room types for blueprint system
+export interface DynamicRoomOptions {
+  projectId?: string;
+  blueprintId?: string;
+  version?: string;
   name?: string;
-}
-
-export interface UIEvent {
-  type: string;
-  [key: string]: any;
+  config?: Record<string, any>;
+  bundleUrl?: string;
 }

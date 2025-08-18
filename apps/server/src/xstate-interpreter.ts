@@ -1,9 +1,11 @@
+import jsonLogic from "json-logic-js";
 import {
   createActor,
   createMachine,
   type Actor,
   type AnyStateMachine,
 } from "xstate";
+import { resolveTokens } from "./template.js";
 
 export interface InterpreterContext {
   room: any;
@@ -29,6 +31,7 @@ export class XStateInterpreter {
   private service: Actor<AnyStateMachine>;
   private actions: ActionImplementations;
   private roomContext: InterpreterContext;
+  private lastEvent: any | null = null;
 
   constructor(
     machineConfig: any,
@@ -39,6 +42,8 @@ export class XStateInterpreter {
     this.roomContext = roomContext;
 
     // Convert our JSON config to XState format and create machine
+    console.log(`[XState] Creating machine with config:`, machineConfig);
+
     this.machine = createMachine(
       {
         ...machineConfig,
@@ -48,9 +53,11 @@ export class XStateInterpreter {
       },
       {
         actions: this.createXStateActions(),
-        guards: {}, // Add guards if needed later
+        guards: this.createXStateGuards(),
       }
     );
+
+    console.log(`[XState] Machine created successfully`);
 
     // Create and start the service (XState v5 syntax)
     this.service = createActor(this.machine);
@@ -64,7 +71,11 @@ export class XStateInterpreter {
    */
   send(event: string, payload?: any) {
     console.log(`[XState] Sending event: ${event}`, payload);
+    console.log(`[XState] Current state: ${this.getCurrentState()}`);
+    // Capture the last event payload for action parameter merging
+    this.lastEvent = { type: event, ...(payload || {}) };
     this.service.send({ type: event, ...payload });
+    console.log(`[XState] New state: ${this.getCurrentState()}`);
   }
 
   /**
@@ -95,11 +106,42 @@ export class XStateInterpreter {
   private createXStateActions() {
     const xstateActions: Record<string, any> = {};
 
+    console.log(`[XState] Creating actions for:`, Object.keys(this.actions));
+
     for (const [actionName, actionFn] of Object.entries(this.actions)) {
-      xstateActions[actionName] = (context: any, event: any) => {
-        console.log(`[XState] Executing action: ${actionName}`);
+      xstateActions[actionName] = (context: any, event: any, meta: any) => {
+        console.log(`[XState] Action ${actionName} - meta:`, meta);
+        console.log(`[XState] Action ${actionName} - event:`, event);
+
+        // XState passes action params as 'event', triggering event is in lastEvent
+        const actionParams = event || {};
+        const triggeringEvent = this.lastEvent || {};
+
+        // Don't merge if action params have the same type as action name (avoid overwriting)
+        const rawParams = { ...actionParams };
+        if (rawParams.type === actionName) {
+          delete rawParams.type;
+        }
+        // Add session info from triggering event
+        if (triggeringEvent.sessionId && !rawParams.sessionId) {
+          rawParams.sessionId = triggeringEvent.sessionId;
+        }
+        const view = {
+          event: triggeringEvent,
+          state: this.roomContext.state,
+          context: this.roomContext.context,
+          data: this.roomContext.data,
+        };
+        const mergedParams = resolveTokens(rawParams, view);
+
+        console.log(`[XState] Executing action: ${actionName}`, {
+          actionParams,
+          triggeringEvent,
+          rawParams,
+          mergedParams,
+        });
         try {
-          actionFn(this.roomContext, { event, context });
+          actionFn(this.roomContext, mergedParams);
         } catch (error) {
           console.error(
             `[XState] Error executing action ${actionName}:`,
@@ -109,7 +151,38 @@ export class XStateInterpreter {
       };
     }
 
+    console.log(`[XState] Created XState actions:`, Object.keys(xstateActions));
+
     return xstateActions;
+  }
+
+  /**
+   * Create XState guards from JSONLogic conditions
+   */
+  private createXStateGuards() {
+    const guards: Record<string, any> = {};
+
+    // Add a generic JSONLogic guard
+    guards.jsonLogic = (context: any, event: any, { cond }: any) => {
+      if (!cond) return true;
+
+      const data = {
+        event: event,
+        context: context,
+        state: this.roomContext.state,
+        data: this.roomContext.data,
+      };
+
+      const result = jsonLogic.apply(cond, data);
+      console.log(`[XState] Guard evaluation:`, {
+        cond,
+        data: { event, state: this.roomContext.state.phase },
+        result,
+      });
+      return result;
+    };
+
+    return guards;
   }
 
   /**
@@ -120,13 +193,19 @@ export class XStateInterpreter {
 
     const result: any = {};
     for (const [event, transition] of Object.entries(transitions)) {
+      console.log(
+        `[XState] Processing transition for event '${event}':`,
+        transition
+      );
       if (Array.isArray(transition)) {
-        result[event] = transition.map((t) =>
-          this.replaceActionsInTransition(t)
-        );
+        result[event] = transition.map((t, index) => {
+          console.log(`[XState] Processing transition ${index}:`, t);
+          return this.replaceActionsInTransition(t);
+        });
       } else {
         result[event] = this.replaceActionsInTransition(transition);
       }
+      console.log(`[XState] Final transition for '${event}':`, result[event]);
     }
     return result;
   }
@@ -140,12 +219,50 @@ export class XStateInterpreter {
     }
 
     if (transition.actions) {
-      return {
+      // Convert action objects to XState format
+      const actions = Array.isArray(transition.actions)
+        ? transition.actions
+        : [transition.actions];
+      const xstateActions = actions.map((action: any) => {
+        if (typeof action === "object" && action.type) {
+          // Return action with its parameters
+          console.log(`[XState] Converting action:`, action);
+          return {
+            type: action.type,
+            params: action,
+          };
+        }
+        return action;
+      });
+
+      // Handle guards (conditions) for transitions
+      const result: any = {
         ...transition,
-        actions: Array.isArray(transition.actions)
-          ? transition.actions
-          : [transition.actions],
+        actions: xstateActions,
       };
+
+      if (transition.cond) {
+        result.guard = ({ event, context }: any) => {
+          const data = {
+            event,
+            context,
+            state: this.roomContext.state,
+            data: this.roomContext.data,
+          };
+          const guardResult = jsonLogic.apply(transition.cond, data);
+          console.log(`[XState] Guard check:`, {
+            cond: transition.cond,
+            event,
+            statePhase: (this.roomContext.state as any)?.phase,
+            result: guardResult,
+          });
+          return guardResult;
+        };
+        // Remove original 'cond' to avoid conflicts with XState guard processing
+        delete (result as any).cond;
+      }
+
+      return result;
     }
 
     return transition;

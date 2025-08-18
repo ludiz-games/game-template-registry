@@ -5,7 +5,6 @@ import config from "@colyseus/tools";
 /**
  * Import your Room files
  */
-import { FullLLMRoom } from "./rooms/FullLLMRoom.js";
 import { GenericRoom } from "./rooms/GenericRoom.js";
 
 export default config({
@@ -13,7 +12,6 @@ export default config({
     /**
      * Define your room handlers:
      */
-    gameServer.define("full-llm-demo", FullLLMRoom);
     // Generic dynamic room host; loads per-project blueprint bundles at runtime.
     // Join with: client.joinOrCreate("project", { projectId, blueprintId, version })
     gameServer.define("project", GenericRoom);
