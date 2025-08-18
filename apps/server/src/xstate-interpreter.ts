@@ -44,18 +44,22 @@ export class XStateInterpreter {
     // Convert our JSON config to XState format and create machine
     console.log(`[XState] Creating machine with config:`, machineConfig);
 
-    this.machine = createMachine(
-      {
-        ...machineConfig,
-        // Replace action strings with actual action implementations
-        on: this.replaceActionsInTransitions(machineConfig.on),
-        states: this.replaceActionsInStates(machineConfig.states),
-      },
-      {
-        actions: this.createXStateActions(),
-        guards: this.createXStateGuards(),
-      }
+    const processedConfig = {
+      ...machineConfig,
+      // Replace action strings with actual action implementations
+      on: this.replaceActionsInTransitions(machineConfig.on),
+      states: this.replaceActionsInStates(machineConfig.states),
+    };
+
+    console.log(
+      `[XState] Processed machine config:`,
+      JSON.stringify(processedConfig, null, 2)
     );
+
+    this.machine = createMachine(processedConfig, {
+      actions: this.createXStateActions(),
+      guards: this.createXStateGuards(),
+    });
 
     console.log(`[XState] Machine created successfully`);
 
@@ -72,9 +76,22 @@ export class XStateInterpreter {
   send(event: string, payload?: any) {
     console.log(`[XState] Sending event: ${event}`, payload);
     console.log(`[XState] Current state: ${this.getCurrentState()}`);
+
+    // Check if the current state can handle this event
+    const currentSnapshot = this.service.getSnapshot();
+    console.log(`[XState] Current snapshot:`, {
+      value: currentSnapshot.value,
+      status: currentSnapshot.status,
+    });
+
     // Capture the last event payload for action parameter merging
     this.lastEvent = { type: event, ...(payload || {}) };
-    this.service.send({ type: event, ...payload });
+
+    // Don't spread payload to avoid overwriting the event type
+    const eventToSend = { type: event, payload };
+    console.log(`[XState] Sending to XState:`, eventToSend);
+
+    this.service.send(eventToSend);
     console.log(`[XState] New state: ${this.getCurrentState()}`);
   }
 
@@ -113,8 +130,9 @@ export class XStateInterpreter {
         console.log(`[XState] Action ${actionName} - meta:`, meta);
         console.log(`[XState] Action ${actionName} - event:`, event);
 
-        // XState passes action params as 'event', triggering event is in lastEvent
-        const actionParams = event || {};
+        // Prefer explicit params provided on the action (meta.params),
+        // fallback to event payload for backwards compatibility
+        const actionParams = (meta && (meta as any).params) ?? event ?? {};
         const triggeringEvent = this.lastEvent || {};
 
         // Don't merge if action params have the same type as action name (avoid overwriting)
@@ -278,20 +296,54 @@ export class XStateInterpreter {
     for (const [stateName, stateConfig] of Object.entries(
       states as Record<string, any>
     )) {
+      // Helper to normalize actions and attach params so they are accessible via meta.params
+      const mapActions = (actions: any[]) =>
+        actions.map((action) =>
+          typeof action === "object" && action.type
+            ? { type: action.type, params: action }
+            : action
+        );
+
       result[stateName] = {
         ...stateConfig,
         on: this.replaceActionsInTransitions(stateConfig.on),
+        after: stateConfig.after
+          ? this.replaceActionsInAfterTransitions(stateConfig.after)
+          : undefined,
         entry: stateConfig.entry
-          ? Array.isArray(stateConfig.entry)
-            ? stateConfig.entry
-            : [stateConfig.entry]
+          ? mapActions(
+              Array.isArray(stateConfig.entry)
+                ? stateConfig.entry
+                : [stateConfig.entry]
+            )
           : undefined,
         exit: stateConfig.exit
-          ? Array.isArray(stateConfig.exit)
-            ? stateConfig.exit
-            : [stateConfig.exit]
+          ? mapActions(
+              Array.isArray(stateConfig.exit)
+                ? stateConfig.exit
+                : [stateConfig.exit]
+            )
           : undefined,
       };
+    }
+    return result;
+  }
+
+  /**
+   * Replace action strings in after transitions (delayed transitions)
+   */
+  private replaceActionsInAfterTransitions(afterConfig: any): any {
+    if (!afterConfig) return afterConfig;
+
+    const result: any = {};
+    for (const [delay, transition] of Object.entries(afterConfig)) {
+      if (Array.isArray(transition)) {
+        result[delay] = transition.map((t) =>
+          this.replaceActionsInTransition(t)
+        );
+      } else {
+        result[delay] = this.replaceActionsInTransition(transition);
+      }
     }
     return result;
   }
