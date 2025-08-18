@@ -84,6 +84,10 @@
   - [x] Generic actions system with whitelisted operations (`setState`, `increment`, `createInstance`, etc.).
   - [x] Token templating system with Mustache for dynamic parameter resolution (`${event.sessionId}`).
   - [x] MapSchema-aware path utilities for proper Colyseus replication.
+  - [x] React hooks integration via `@ludiz/colyseus-hooks` package.
+  - [x] Enhanced demo with MCQ and True/False question types.
+  - [x] Comprehensive test suite for state machine validation.
+  - [x] Debug and fix XState event handling and ArraySchema synchronization.
   - [ ] Validate incoming messages against JSON Schemas; reject invalid payloads.
   - [ ] Add preview host mode (Colyseus mounted on the preview server inside sandbox).
   - [x] Deprecate `FullLLMRoom`; all games now use machine-first `GenericRoom`.
@@ -109,6 +113,8 @@
   - [ ] Metrics: time-to-first-playable, tool success rates, visual score.
 
 - **QA and tests**
+  - [x] State Machine: Comprehensive test suite for XState interpreter and JSON DSL
+  - [x] Colyseus: Tests for dynamic room creation and state synchronization
   - [ ] Unit: JSON Schema→Zod; outline ops; DB queries and storage helpers.
   - [ ] E2E: Playwright quiz flow; visual check; MCP flow.
   - [ ] Multiplayer: two-client quiz; scoreboard consistency.
