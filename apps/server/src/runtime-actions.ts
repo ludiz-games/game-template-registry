@@ -1,3 +1,4 @@
+import jsonLogic from "json-logic-js";
 import { getByPath, setByPath } from "./path-utils.js";
 import type {
   ActionImplementations,
@@ -127,139 +128,149 @@ export const standardActions: ActionImplementations = {
   },
 
   /**
-   * Set the current question for a player by index from definition data
-   * Expects definition.data.questions to be an array of question objects
-   * Params: { index: number, sessionId?: string, questionsPath?: string }
+   * Create an instance of a dynamic class from an item in a data array
+   * Params: { className: string, statePath: string, arrayPath: string, index?: number, indexStatePath?: string }
    */
-  setQuestionByIndex: (ctx: InterpreterContext, params: any) => {
-    const sessionId: string | undefined = params?.sessionId;
-    const index: number = Number(params?.index ?? 0);
-    const questionsPath: string = params?.questionsPath ?? "questions";
+  createInstanceFromArray: (ctx: InterpreterContext, params: any) => {
+    const { className, statePath, arrayPath, index, indexStatePath } =
+      params || {};
+    if (!className || !statePath || !arrayPath) return;
 
-    if (!sessionId) {
-      console.warn("[Action] setQuestionByIndex: missing sessionId");
-      return;
-    }
-
-    const questions = getByPath(ctx.data, questionsPath);
-    if (!Array.isArray(questions)) {
+    const arr = getByPath(ctx.data, arrayPath);
+    if (!Array.isArray(arr)) {
       console.warn(
-        `[Action] setQuestionByIndex: data.${questionsPath} is not an array`
-      );
-      return;
-    }
-    const questionData = questions[index];
-    if (!questionData) {
-      console.warn(
-        `[Action] setQuestionByIndex: question at index ${index} not found`
+        `[Action] createInstanceFromArray: data.${arrayPath} is not an array`
       );
       return;
     }
 
+    let idx: number | undefined = undefined;
+    if (typeof index === "number") idx = index;
+    if (indexStatePath) {
+      const fromState = getByPath(ctx.state, indexStatePath);
+      if (typeof fromState === "number") idx = fromState;
+    }
+    if (idx == null || idx < 0 || idx >= arr.length) {
+      console.warn(
+        `[Action] createInstanceFromArray: invalid index for ${arrayPath}: ${idx}`
+      );
+      return;
+    }
+
+    const dataItem = arr[idx];
     const dynamicClasses = (ctx.room as any).dynamicClasses;
-    const QuestionClass = dynamicClasses?.get?.("Question");
-    if (!QuestionClass) {
-      console.warn("[Action] setQuestionByIndex: Question class not found");
+    const Ctor = dynamicClasses?.get?.(className);
+    if (!Ctor) {
+      console.warn(
+        `[Action] createInstanceFromArray: class '${className}' not found`
+      );
       return;
     }
-
-    const instance = new QuestionClass();
-    Object.assign(instance, questionData);
-
-    const base = `players.${sessionId}`;
-    setByPath(ctx.state, `${base}.currentQuestion`, instance);
-    setByPath(
-      ctx.state,
-      `${base}.timeLeft`,
-      Number(questionData?.timeLeft ?? 30)
-    );
-    setByPath(ctx.state, `${base}.phase`, "question");
-    setByPath(ctx.state, `${base}.showFeedback`, false);
+    const instance = new Ctor();
+    Object.assign(instance, dataItem);
+    setByPath(ctx.state, statePath, instance);
     console.log(
-      `[Action] setQuestionByIndex: session=${sessionId} index=${index}`
+      `[Action] createInstanceFromArray: set ${statePath} from ${arrayPath}[${idx}]`
     );
   },
 
   /**
-   * Advance the player's question index and set the next question
-   * If there are no more questions, mark phase as finished
-   * Params: { sessionId?: string, questionsPath?: string }
+   * Schedule a list of actions to execute after a delay
+   * Params: { delayMs: number, actions: Array<{ type: string, ...params }> }
    */
-  advanceQuestion: (ctx: InterpreterContext, params: any) => {
-    const sessionId: string | undefined = params?.sessionId;
-    const questionsPath: string = params?.questionsPath ?? "questions";
-    if (!sessionId) {
-      console.warn("[Action] advanceQuestion: missing sessionId");
-      return;
-    }
-
-    const questions = getByPath(ctx.data, questionsPath);
-    const base = `players.${sessionId}`;
-    const currentIndex: number = Number(
-      getByPath(ctx.state, `${base}.questionIndex`) ?? 0
-    );
-    const nextIndex = currentIndex + 1;
-
-    if (!Array.isArray(questions) || nextIndex >= questions.length) {
-      setByPath(ctx.state, `${base}.phase`, "finished");
-      setByPath(ctx.state, `${base}.showFeedback`, false);
-      console.log(
-        `[Action] advanceQuestion: session=${sessionId} finished at index ${currentIndex}`
-      );
-      return;
-    }
-
-    setByPath(ctx.state, `${base}.questionIndex`, nextIndex);
-
-    const dynamicClasses = (ctx.room as any).dynamicClasses;
-    const QuestionClass = dynamicClasses?.get?.("Question");
-    if (!QuestionClass) {
-      console.warn("[Action] advanceQuestion: Question class not found");
-      return;
-    }
-
-    const instance = new QuestionClass();
-    Object.assign(instance, questions[nextIndex]);
-
-    setByPath(ctx.state, `${base}.currentQuestion`, instance);
-    setByPath(
-      ctx.state,
-      `${base}.timeLeft`,
-      Number(questions[nextIndex]?.timeLeft ?? 30)
-    );
-    setByPath(ctx.state, `${base}.phase`, "question");
-    setByPath(ctx.state, `${base}.showFeedback`, false);
-
-    console.log(
-      `[Action] advanceQuestion: session=${sessionId} -> index=${nextIndex}`
-    );
-  },
-
-  /**
-   * Schedule advancing a player's question after a delay (ms)
-   * Params: { sessionId?: string, delayMs?: number, questionsPath?: string }
-   */
-  scheduleAdvance: (ctx: InterpreterContext, params: any) => {
-    const sessionId: string | undefined = params?.sessionId;
-    const delayMs: number = Number(params?.delayMs ?? 3000);
-    const questionsPath: string = params?.questionsPath ?? "questions";
-    if (!sessionId) {
-      console.warn("[Action] scheduleAdvance: missing sessionId");
-      return;
-    }
+  scheduleActions: (ctx: InterpreterContext, params: any) => {
+    const delayMs: number = Number(params?.delayMs ?? 0);
+    const actions: any[] = Array.isArray(params?.actions) ? params.actions : [];
+    if (!actions.length) return;
 
     setTimeout(() => {
       try {
-        // Use our own action to advance
-        standardActions.advanceQuestion(ctx, { sessionId, questionsPath });
+        for (const action of actions) {
+          const { type: actionType, ...rest } = action || {};
+          const fn = (standardActions as any)[actionType];
+          if (typeof fn === "function") {
+            fn(ctx, rest);
+          } else {
+            console.warn(
+              `[Action] scheduleActions: unknown action '${actionType}'`
+            );
+          }
+        }
       } catch (e) {
-        console.error("[Action] scheduleAdvance error:", e);
+        console.error("[Action] scheduleActions error:", e);
       }
     }, delayMs);
 
     console.log(
-      `[Action] scheduleAdvance: session=${sessionId} in ${delayMs}ms`
+      `[Action] scheduleActions: scheduled ${actions.length} action(s) in ${delayMs}ms`
     );
+  },
+
+  /**
+   * Set a state path from an item in a data array (optionally a specific key)
+   * Params: { statePath: string, arrayPath: string, key?: string, index?: number, indexStatePath?: string }
+   */
+  setFromArray: (ctx: InterpreterContext, params: any) => {
+    const { statePath, arrayPath, key, index, indexStatePath } = params || {};
+    if (!statePath || !arrayPath) return;
+
+    const arr = getByPath(ctx.data, arrayPath);
+    if (!Array.isArray(arr)) {
+      console.warn(`[Action] setFromArray: data.${arrayPath} is not an array`);
+      return;
+    }
+
+    let idx: number | undefined = undefined;
+    if (typeof index === "number") idx = index;
+    if (indexStatePath) {
+      const fromState = getByPath(ctx.state, indexStatePath);
+      if (typeof fromState === "number") idx = fromState;
+    }
+    if (idx == null || idx < 0 || idx >= arr.length) {
+      console.warn(
+        `[Action] setFromArray: invalid index for ${arrayPath}: ${idx}`
+      );
+      return;
+    }
+
+    const item = arr[idx];
+    const value = key ? item?.[key] : item;
+    setByPath(ctx.state, statePath, value);
+    console.log(
+      `[Action] setFromArray: ${statePath} <= ${arrayPath}[${idx}]${
+        key ? "." + key : ""
+      }`
+    );
+  },
+
+  /**
+   * Conditionally run actions using JSONLogic
+   * Params: { cond: object, then?: Action[], else?: Action[] }
+   */
+  when: (ctx: InterpreterContext, params: any) => {
+    const cond = params?.cond;
+    const thenActions: any[] = Array.isArray(params?.then) ? params.then : [];
+    const elseActions: any[] = Array.isArray(params?.else) ? params.else : [];
+
+    const data = {
+      state: ctx.state,
+      data: ctx.data,
+      context: ctx.context,
+    };
+
+    const result = cond ? jsonLogic.apply(cond, data) : true;
+    const actionsToRun = result ? thenActions : elseActions;
+
+    for (const action of actionsToRun) {
+      const { type: actionType, ...rest } = action || {};
+      const fn = (standardActions as any)[actionType];
+      if (typeof fn === "function") {
+        fn(ctx, rest);
+      } else {
+        console.warn(`[Action] when: unknown action '${actionType}'`);
+      }
+    }
+    console.log(`[Action] when: cond=${JSON.stringify(cond)} => ${result}`);
   },
 
   /**
