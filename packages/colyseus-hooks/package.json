@@ -21,7 +21,8 @@
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
     "check-types": "tsc --noEmit",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "prepare": "pnpm run build"
   },
   "keywords": [
     "react",
@@ -35,8 +36,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/ludiz-vibe",
-    "directory": "packages/colyseus-hooks"
+    "url": "https://github.com/ludiz-games/colyseus-hooks"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

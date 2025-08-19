@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Check, CheckCircle, X, XCircle } from "lucide-react";
 import { useState } from "react";
 
 interface TrueFalseComponentProps {
@@ -22,7 +24,6 @@ export function TrueFalseComponent({
     null
   );
 
-  // Use controlled or uncontrolled pattern
   const currentSelected =
     selectedAnswer !== undefined ? selectedAnswer : internalSelected;
 
@@ -35,66 +36,95 @@ export function TrueFalseComponent({
     onAnswerSelect?.(answer);
   };
 
-  const getButtonStyle = (value: boolean) => {
-    const baseStyle =
-      "flex-1 h-20 text-lg font-medium transition-all duration-200";
-
+  const getButtonVariant = (value: boolean) => {
     if (disabled && showFeedback && correctAnswer !== undefined) {
       if (value === correctAnswer) {
-        return `${baseStyle} bg-green-500 text-white border-2 border-green-500`;
+        return "default";
       } else if (currentSelected === value && value !== correctAnswer) {
-        return `${baseStyle} bg-red-500 text-white border-2 border-red-500`;
+        return "destructive";
       }
-      return `${baseStyle} bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 opacity-60`;
+      return "secondary";
     }
 
     if (currentSelected === value) {
-      return `${baseStyle} bg-blue-500 hover:bg-blue-600 text-white border-2 border-blue-500`;
+      return "default";
     }
 
-    return `${baseStyle} bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600`;
+    return "outline";
+  };
+
+  const getButtonClassName = (value: boolean) => {
+    const baseStyle = "h-24 text-lg font-semibold relative overflow-hidden";
+
+    if (disabled && showFeedback && correctAnswer !== undefined) {
+      if (value === correctAnswer) {
+        return cn(
+          baseStyle,
+          "bg-green-500 hover:bg-green-600 text-white border-green-500"
+        );
+      } else if (currentSelected === value && value !== correctAnswer) {
+        return cn(baseStyle, "bg-destructive hover:bg-destructive/90");
+      }
+      return cn(baseStyle, "opacity-60");
+    }
+
+    return baseStyle;
+  };
+
+  const getFeedbackIcon = (value: boolean) => {
+    if (!showFeedback || !disabled || correctAnswer === undefined) return null;
+
+    if (value === correctAnswer) {
+      return <CheckCircle className="w-5 h-5 absolute top-2 right-2" />;
+    } else if (currentSelected === value && value !== correctAnswer) {
+      return <XCircle className="w-5 h-5 absolute top-2 right-2" />;
+    }
+
+    return null;
   };
 
   return (
-    <div className="flex gap-4">
+    <div className="grid grid-cols-2 gap-6">
       <Button
-        variant="outline"
-        className={getButtonStyle(true)}
+        variant={getButtonVariant(true)}
+        className={getButtonClassName(true)}
         onClick={() => handleAnswerSelect(true)}
         disabled={disabled}
       >
-        <div className="flex flex-col items-center space-y-2">
-          <div className="text-2xl">✓</div>
-          <div>TRUE</div>
+        {getFeedbackIcon(true)}
+        <div className="flex flex-col items-center space-y-3">
+          <Check className="w-8 h-8" />
+          <div className="font-bold text-xl">TRUE</div>
           {showFeedback && disabled && correctAnswer === true && (
-            <div className="text-sm opacity-75">Correct!</div>
+            <div className="text-sm opacity-90 font-medium">Correct!</div>
           )}
           {showFeedback &&
             disabled &&
             currentSelected === true &&
             correctAnswer === false && (
-              <div className="text-sm opacity-75">Incorrect</div>
+              <div className="text-sm opacity-90 font-medium">Incorrect</div>
             )}
         </div>
       </Button>
 
       <Button
-        variant="outline"
-        className={getButtonStyle(false)}
+        variant={getButtonVariant(false)}
+        className={getButtonClassName(false)}
         onClick={() => handleAnswerSelect(false)}
         disabled={disabled}
       >
-        <div className="flex flex-col items-center space-y-2">
-          <div className="text-2xl">✗</div>
-          <div>FALSE</div>
+        {getFeedbackIcon(false)}
+        <div className="flex flex-col items-center space-y-3">
+          <X className="w-8 h-8" />
+          <div className="font-bold text-xl">FALSE</div>
           {showFeedback && disabled && correctAnswer === false && (
-            <div className="text-sm opacity-75">Correct!</div>
+            <div className="text-sm opacity-90 font-medium">Correct!</div>
           )}
           {showFeedback &&
             disabled &&
             currentSelected === false &&
             correctAnswer === true && (
-              <div className="text-sm opacity-75">Incorrect</div>
+              <div className="text-sm opacity-90 font-medium">Incorrect</div>
             )}
         </div>
       </Button>

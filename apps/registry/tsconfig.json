@@ -6,6 +6,12 @@
       "@/*": [
         "./*"
       ],
+      "@/components/*": [
+        "./components/*"
+      ],
+      "@/lib/*": [
+        "./lib/*"
+      ],
       "@repo/*": [
         "../../packages/*"
       ]
