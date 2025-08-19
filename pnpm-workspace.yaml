@@ -1,3 +1,6 @@
 packages:
-  - "apps/*"
+  - "game-template-multistep-quizz"
+  - "game-template-registry" 
+  - "colyseus-server"
+  - "colyseus-hooks"
   - "packages/*"
