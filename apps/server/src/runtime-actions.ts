@@ -252,8 +252,13 @@ export const standardActions: ActionImplementations = {
     const thenActions: any[] = Array.isArray(params?.then) ? params.then : [];
     const elseActions: any[] = Array.isArray(params?.else) ? params.else : [];
 
+    // Use a plain JSON snapshot for JSONLogic compatibility (handles MapSchema, Schema)
+    const statePlain =
+      ctx.state && (ctx.state as any).toJSON
+        ? (ctx.state as any).toJSON()
+        : ctx.state;
     const data = {
-      state: ctx.state,
+      state: statePlain,
       data: ctx.data,
       context: ctx.context,
     };
