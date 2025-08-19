@@ -1,0 +1,47 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "ludiz-vibe",
+  "homepage": "https://ludiz-vibe.com",
+  "description": "Component registry for the Ludiz-Vibe AI-powered learning platform",
+  "items": [
+    {
+      "name": "mcq-component",
+      "type": "registry:component",
+      "title": "MCQ Choices",
+      "description": "Ultra-focused multiple choice selection component. Only handles choice display and selection - no timer, title, or submit logic.",
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "registry/ludiz/mcq-component/mcq-component.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "true-false-component",
+      "type": "registry:component",
+      "title": "True/False Buttons",
+      "description": "Focused True/False selection buttons. Handles only the button interaction - no timer, title, or submission logic.",
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "registry/ludiz/true-false-component/true-false-component.tsx",
+          "type": "registry:component"
+        }
+      ]
+    },
+    {
+      "name": "quiz-timer",
+      "type": "registry:component",
+      "title": "Quiz Timer",
+      "description": "Reusable timer component with progress bar and warning states for timed activities",
+      "registryDependencies": ["card"],
+      "files": [
+        {
+          "path": "registry/ludiz/quiz-timer/quiz-timer.tsx",
+          "type": "registry:component"
+        }
+      ]
+    }
+  ]
+}
