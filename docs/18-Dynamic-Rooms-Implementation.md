@@ -288,6 +288,105 @@ The system is designed to support:
 - **Examples**: Working quiz demo in `apps/game/`
 - **Schemas**: JSON Schema definitions for validation
 
+## Blueprint Patterns
+
+The generic action system supports two main multiplayer patterns:
+
+### Per-Player Independent Flow
+
+Each player progresses through their own state independently. The leaderboard remains shared, but individual progress (current question, phase, timer) is isolated.
+
+**Schema Structure:**
+
+```json
+{
+  "Player": {
+    "name": { "type": "string" },
+    "score": { "type": "number" },
+    "phase": { "type": "string" },
+    "currentQuestion": { "ref": "Question" },
+    "questionIndex": { "type": "number" },
+    "timeLeft": { "type": "number" },
+    "showFeedback": { "type": "boolean" }
+  },
+  "State": {
+    "players": { "map": "Player" }
+  }
+}
+```
+
+**Action Pattern:**
+
+```json
+{
+  "type": "setState",
+  "path": "players.${event.sessionId}.phase",
+  "value": "question"
+}
+```
+
+**Use Cases:** Quiz games, individual puzzles, turn-based games where players move at their own pace.
+
+### Global Synchronized Flow
+
+All players see the same state and progress together through synchronized phases.
+
+**Schema Structure:**
+
+```json
+{
+  "Player": {
+    "name": { "type": "string" },
+    "score": { "type": "number" }
+  },
+  "State": {
+    "players": { "map": "Player" },
+    "globalPhase": { "type": "string" },
+    "currentQuestion": { "ref": "Question" },
+    "timeLeft": { "type": "number" }
+  }
+}
+```
+
+**Action Pattern:**
+
+```json
+{
+  "type": "setState",
+  "path": "globalPhase",
+  "value": "question"
+}
+```
+
+**Use Cases:** Live trivia shows, synchronized presentations, real-time collaborative games.
+
+### Hybrid Patterns
+
+You can combine both patterns:
+
+- Global timer and question progression
+- Per-player answer tracking and scoring
+- Shared results and leaderboards
+
+```json
+{
+  "actions": [
+    {
+      "type": "setState",
+      "path": "globalPhase",
+      "value": "question"
+    },
+    {
+      "type": "incrementIfEqual",
+      "path": "players.${event.sessionId}.score",
+      "equalsPath": "currentQuestion.correctAnswer",
+      "value": "${event.value}",
+      "delta": 1
+    }
+  ]
+}
+```
+
 ## 🎉 Conclusion
 
 We have successfully built a **production-ready, generic Colyseus dynamic room system** that:
@@ -296,6 +395,7 @@ We have successfully built a **production-ready, generic Colyseus dynamic room s
 - ✅ Uses industry-standard libraries (XState, JSONLogic)
 - ✅ Generates runtime schemas without `extNum` hacks
 - ✅ Provides robust token templating
+- ✅ Supports both per-player and synchronized multiplayer patterns
 - ✅ Works with any game type definable as a state machine
 - ✅ Maintains full type safety and Colyseus compatibility
 

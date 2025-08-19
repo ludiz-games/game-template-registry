@@ -93,9 +93,24 @@ We have successfully completed **Milestone 0 (M0 - Decisions & Skeletons)**, **f
 - `GenericRoom` - Single room type hosts all games
 - `schema-builder` - Runtime Colyseus Schema generation
 - `xstate-interpreter` - State machine + JSONLogic integration
-- `runtime-actions` - Generic, whitelisted actions
+- `runtime-actions` - Generic, composable action primitives
 - `template` - Mustache token resolution
 - `path-utils` - MapSchema-aware path operations
+
+**Generic Action System:**
+
+- ✅ **Core Actions**: `setState`, `increment`, `setFromData`
+- ✅ **Instance Creation**: `createInstance`, `createInstanceFromArray`, `ensureInstanceAtPath`
+- ✅ **Array Operations**: `setFromArray` with index resolution
+- ✅ **Conditional Logic**: `incrementIfEqual`, `when` (JSONLogic)
+- ✅ **Timing**: `scheduleActions` for delayed execution
+- ✅ **Communication**: `broadcast`, `log`
+
+**Multiplayer Patterns:**
+
+- ✅ **Per-Player Independent**: `players.${event.sessionId}.*` paths
+- ✅ **Global Synchronized**: Root-level state paths
+- ✅ **Hybrid**: Mix of both patterns in same blueprint
 
 See **`docs/18-Dynamic-Rooms-Implementation.md`** for complete technical details.
 

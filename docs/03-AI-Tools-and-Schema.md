@@ -484,3 +484,234 @@ export async function POST(
   return new Response(JSON.stringify(result), { status: 200 });
 }
 ```
+
+## Generic Actions Catalog
+
+The server provides a set of generic, reusable actions that any blueprint can use. These actions operate on paths and use token templating for dynamic behavior.
+
+### Core Actions
+
+#### `setState`
+
+Set a field on the replicated state.
+
+```json
+{
+  "type": "setState",
+  "path": "players.${event.sessionId}.score",
+  "value": 10
+}
+```
+
+#### `increment`
+
+Increment a numeric field.
+
+```json
+{
+  "type": "increment",
+  "path": "players.${event.sessionId}.questionIndex",
+  "delta": 1
+}
+```
+
+#### `setFromData`
+
+Set a state field from static data using JSONPath.
+
+```json
+{
+  "type": "setFromData",
+  "statePath": "currentLevel",
+  "dataPath": "levels.0.name"
+}
+```
+
+### Instance Creation Actions
+
+#### `createInstance`
+
+Create an instance of a dynamic class and set it on state.
+
+```json
+{
+  "type": "createInstance",
+  "className": "Question",
+  "statePath": "currentQuestion",
+  "data": {
+    "id": "q1",
+    "text": "What is 2+2?",
+    "correctAnswer": "4"
+  }
+}
+```
+
+#### `createInstanceFromArray`
+
+Create an instance from an item in a data array.
+
+```json
+{
+  "type": "createInstanceFromArray",
+  "className": "Question",
+  "statePath": "players.${event.sessionId}.currentQuestion",
+  "arrayPath": "questions",
+  "indexStatePath": "players.${event.sessionId}.questionIndex"
+}
+```
+
+#### `ensureInstanceAtPath`
+
+Ensure an instance exists at a path, creating if missing.
+
+```json
+{
+  "type": "ensureInstanceAtPath",
+  "className": "Player",
+  "statePath": "players.${event.sessionId}",
+  "data": { "name": "New Player", "score": 0 }
+}
+```
+
+### Array and Data Actions
+
+#### `setFromArray`
+
+Set a state path from an array item (optionally a specific key).
+
+```json
+{
+  "type": "setFromArray",
+  "statePath": "players.${event.sessionId}.timeLeft",
+  "arrayPath": "questions",
+  "key": "timeLeft",
+  "indexStatePath": "players.${event.sessionId}.questionIndex"
+}
+```
+
+### Conditional Actions
+
+#### `incrementIfEqual`
+
+Conditionally increment if a value matches expected.
+
+```json
+{
+  "type": "incrementIfEqual",
+  "path": "players.${event.sessionId}.score",
+  "equalsPath": "players.${event.sessionId}.currentQuestion.correctAnswer",
+  "value": "${event.value}",
+  "delta": 1
+}
+```
+
+#### `when`
+
+Conditionally run actions using JSONLogic.
+
+```json
+{
+  "type": "when",
+  "cond": {
+    "<": [
+      { "var": "state.players.${event.sessionId}.questionIndex" },
+      { "var": "data.questionsCount" }
+    ]
+  },
+  "then": [{ "type": "setState", "path": "phase", "value": "nextQuestion" }],
+  "else": [{ "type": "setState", "path": "phase", "value": "finished" }]
+}
+```
+
+### Timing Actions
+
+#### `scheduleActions`
+
+Schedule actions to execute after a delay.
+
+```json
+{
+  "type": "scheduleActions",
+  "delayMs": 3000,
+  "actions": [
+    {
+      "type": "setState",
+      "path": "players.${event.sessionId}.phase",
+      "value": "nextQuestion"
+    }
+  ]
+}
+```
+
+### Communication Actions
+
+#### `broadcast`
+
+Broadcast a message to all clients.
+
+```json
+{
+  "type": "broadcast",
+  "event": "quiz.finished",
+  "data": { "winner": "${state.topPlayer}" }
+}
+```
+
+#### `log`
+
+Log a message (useful for debugging).
+
+```json
+{
+  "type": "log",
+  "message": "Player ${event.sessionId} answered correctly!"
+}
+```
+
+### Token Resolution
+
+Actions support Mustache-style token templating:
+
+- `${event.sessionId}` - The session ID of the client that sent the event
+- `${event.value}` - Value from the event payload
+- `${state.phase}` - Current state value
+- `${data.questionsCount}` - Static data value
+- `${context.gameMode}` - Machine context value
+
+### Common Patterns
+
+#### Per-Player Independent Flow
+
+Use `players.${event.sessionId}.*` paths for independent player progression:
+
+```json
+{
+  "type": "setState",
+  "path": "players.${event.sessionId}.phase",
+  "value": "question"
+}
+```
+
+#### Global Synchronized Flow
+
+Use root-level paths for synchronized behavior:
+
+```json
+{
+  "type": "setState",
+  "path": "globalPhase",
+  "value": "question"
+}
+```
+
+#### Array Length Guards
+
+Avoid hardcoding counts. Use `data` or JSONLogic:
+
+```json
+{
+  "cond": {
+    "<": [{ "var": "state.questionIndex" }, { "var": "data.questions.length" }]
+  }
+}
+```
