@@ -1,164 +1,136 @@
-# convex-starter
+# Ludiz-Vibe Component Registry
 
-A highly opinionated Next.js starter with better-auth, convex, shadcn/ui, react-email, and turborepo. Pre-configured for rapid, scalable development.
+A custom component registry for serious game and educational components built for the Ludiz-Vibe AI-powered learning platform.
 
-## Project Structure
+## Overview
 
-```
-convex-starter/
-├── apps/
-│   └── web/                # Main Next.js application
-├── packages/
-│   ├── backend/            # Convex backend
-│   ├── eslint-config/      # Shared ESLint configurations
-│   ├── typescript-config/  # Shared TypeScript configurations
-│   └── ui/                 # Shared UI components (shadcn/ui)
-└── turbo/                  # Turborepo configuration
-```
+This registry provides reusable, interactive components specifically designed for serious games, educational content, and learning experiences. Components are built with accessibility, gamification, and learning outcomes in mind.
 
-## Features
+## Available Components
 
-- Authentication with [Better Auth](https://better-auth.com)
-- Backend platform (db, functions, storage, jobs) using [Convex](https://www.convex.dev/)
-- UI components built with [shadcn/ui](https://ui.shadcn.com) and [Tailwind CSS](https://tailwindcss.com)
-- Email support with [react-email](https://react.email) and [Resend](https://resend.com)
-- Form handling via [react-hook-form](https://react-hook-form.com)
-- Monorepo setup using [Turborepo](https://turbo.build/repo)
+### 🧠 Ultra-Focused Game Building Blocks
 
-## Getting Started
+- **MCQ Choices** (`mcq-component`) - Pure choice selection component (no timer, title, or submit logic)
+- **True/False Buttons** (`true-false-component`) - Focused True/False selection buttons
+- **Quiz Timer** (`quiz-timer`) - Standalone timer with progress bar and warning states
 
-### 1. Create a New Project
+### Design Philosophy
 
-```bash
-npx create-next-app@latest [project-name] --use-pnpm --example https://github.com/jordanliu/convex-starter
-```
+Each component is **ultra-focused** on a single responsibility:
 
-### 2. Install Dependencies
+- 🎯 **Single Purpose** - Each component does one thing extremely well
+- 🧩 **Composable** - Combine components to build complex game experiences
+- 🔧 **Controlled/Uncontrolled** - Support both patterns for maximum flexibility
+- 🎨 **Accessible** - WCAG compliant with keyboard navigation
+- 📱 **Responsive** - Works across all device sizes
+
+## Usage
+
+### Install Components
 
 ```bash
-cd [project-name]
-pnpm install
+# Install a specific component
+npx shadcn@latest add http://localhost:3002/registry/mcq-component
+
+# Install all ludiz-vibe components
+npx shadcn@latest add http://localhost:3002/registry/mcq-component \
+  http://localhost:3002/registry/true-false-component \
+  http://localhost:3002/registry/quiz-timer
 ```
 
-### 3. Configure Client
+### Example Usage
 
-Copy the example environment file into .env.local in apps/web, then update it with your real values.
+```tsx
+import { MCQComponent } from "@/components/mcq-component";
+import { QuizTimer } from "@/components/quiz-timer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const choices = [
+  { id: "1", text: "Option A", isCorrect: false },
+  { id: "2", text: "Option B", isCorrect: true },
+  { id: "3", text: "Option C", isCorrect: false },
+];
+
+function QuizPage() {
+  const [selectedChoice, setSelectedChoice] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <CardTitle>What is the main component of Mars' atmosphere?</CardTitle>
+          <QuizTimer totalTime={30} onTimeUp={() => setShowFeedback(true)} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <MCQComponent
+          choices={choices}
+          selectedChoice={selectedChoice}
+          onChoiceSelect={setSelectedChoice}
+          showFeedback={showFeedback}
+          disabled={showFeedback}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+## Development
+
+### Running the Registry
 
 ```bash
-cp apps/web/.env.example apps/web/.env.local
+# Start development server
+pnpm --filter=@repo/registry dev
+
+# Build registry files
+pnpm --filter=@repo/registry registry:build
+
+# Build for production
+pnpm --filter=@repo/registry build
 ```
 
-### 4. Configure Convex
+### Adding New Components
 
-```bash
-pnpm --filter @repo/backend run setup
-```
+1. Create component directory: `registry/ludiz/[component-name]/`
+2. Add component file: `[component-name].tsx`
+3. Update `registry.json` with component metadata
+4. Run `pnpm registry:build` to generate static files
 
-This initializes your Convex project. Next, ensure your backend environment variables are uploaded to the Convex dashboard. From root run:
+### Component Guidelines
 
-```bash
-cp packages/backend/.env.example packages/backend/.env.local
-```
+- **Educational Focus**: Components should support learning objectives
+- **Accessibility**: Follow WCAG 2.1 AA guidelines
+- **Gamification**: Include engaging interactions and feedback
+- **Reusability**: Design for multiple contexts and subjects
+- **Performance**: Optimize for real-time multiplayer scenarios
 
-You will then need to upload the environment variables into your Convex dashboard manually or via `convex env`. You can find more details [here](https://docs.convex.dev/production/environment-variables).
+## API Endpoints
 
-### 5. Start the Development Server
+- `GET /registry/[component-name]` - Get component definition and files
+- `GET /` - Registry homepage with component browser
 
-```bash
-pnpm dev
-```
+## Integration with Ludiz-Vibe
 
-This will start both the Next.js application at [http://localhost:3000](http://localhost:3000) and the Convex development server at [http://127.0.0.1:6790](http://127.0.0.1:6790).
+These components are designed to work seamlessly with:
 
-## Available Commands
+- **Colyseus Multiplayer** - Real-time state synchronization
+- **AI SDK** - AI-generated questions and adaptive content
+- **Convex Backend** - Progress tracking and analytics
+- **Design Toolchain** - Visual component composition
 
-### Development
+## Contributing
 
-```bash
-pnpm dev          # Start development servers for all packages
-pnpm build        # Build all packages for production
-pnpm start        # Start production server (requires build)
-```
+When adding new components:
 
-### Code Quality
+1. Focus on serious game mechanics (scoring, progression, feedback)
+2. Support both single-player and multiplayer scenarios
+3. Include comprehensive TypeScript types
+4. Add proper documentation and examples
+5. Test with various content types and subjects
 
-```bash
-pnpm lint         # Run ESLint across all packages
-pnpm format       # Format code with Prettier
-pnpm check-types  # Run TypeScript type checking
-```
+## License
 
-### Convex-Specific
-
-```bash
-pnpm --filter @repo/backend setup   # Initialize Convex project (run once)
-pnpm --filter @repo/backend dev     # Start Convex development server only
-pnpm --filter @repo/backend deploy  # Deploy Convex backend to production
-```
-
-### Package-Specific
-
-```bash
-pnpm --filter web dev         # Run only the Next.js application
-```
-
-## Project Management
-
-### Adding New Packages
-
-```bash
-turbo gen
-```
-
-Follow the prompts to scaffold a new package with proper TypeScript and build configurations.
-
-### Adding shadcn/ui Components
-
-```bash
-cd apps/web
-pnpm dlx shadcn@canary add [component-name]
-```
-
-Components are automatically added to the UI package and can be imported across the monorepo.
-
-### Managing Dependencies
-
-```bash
-# Add to specific package
-pnpm --filter web add [package-name]
-pnpm --filter @repo/ui add [package-name]
-pnpm --filter @repo/backend add [package-name]
-
-# Add to workspace root (affects all packages)
-pnpm add -w [package-name]
-
-# Add dev dependencies
-pnpm --filter web add -D [package-name]
-```
-
-## Deployment
-
-### 1. Deploy Convex Backend
-
-```bash
-pnpm --filter @repo/backend run deploy
-```
-
-This creates your production Convex deployment and provides you with a production URL.
-
-### 2. Configure Production Environment
-
-Update your hosting platform (Vercel, Netlify, etc.) with the production Convex URL:
-
-```env
-CONVEX_URL=https://your-production-deployment.convex.cloud
-NEXT_PUBLIC_CONVEX_URL=https://your-production-deployment.convex.cloud
-```
-
-### 3. Build and Deploy Frontend
-
-```bash
-pnpm build
-```
-
-Then deploy the built application using your preferred hosting platform's deployment method.
+MIT License - Part of the Ludiz-Vibe project ecosystem.
