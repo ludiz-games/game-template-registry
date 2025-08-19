@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { OpenInV0Button } from "@/components/open-in-v0-button"
 import { MCQComponent } from "@/registry/ludiz/mcq-component/mcq-component"
